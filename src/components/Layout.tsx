@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Receipt, Users, Briefcase, CreditCard, PieChart, PlusCircle, Sparkles, Calendar, Trash2, Cloud, RefreshCw, Menu, X, LogOut, CloudDownload } from 'lucide-react';
+import { LayoutDashboard, Receipt, Users, Briefcase, CreditCard, PieChart, PlusCircle, Sparkles, Calendar, Trash2, Cloud, RefreshCw, Menu, X, LogOut, CloudDownload, Database } from 'lucide-react';
 import { useGoogleAuth } from '../hooks/useGoogleAuth';
 import { deleteFinanceCalendar } from '../lib/googleCalendar';
 import { useFinance } from '../context/FinanceContext';
@@ -119,6 +119,18 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                   title="Descargar todo de Google Sheets (Pull)"
                 >
                   {isSyncing ? <RefreshCw size={16} className="animate-spin" /> : <CloudDownload size={16} />}
+                </button>
+                <button 
+                  onClick={() => {
+                    if (confirm('⚠️ ¿BORRAR TODOS LOS DATOS LOCALES?\n\nEsto reiniciará la base de datos a los valores de fábrica. Perderás los registros que no hayas subido a la nube.')) {
+                      localStorage.clear();
+                      window.location.reload();
+                    }
+                  }}
+                  className="mt-8 p-3 bg-red-500/10 border border-red-500/20 text-red-500 rounded-2xl hover:bg-red-500 hover:text-white transition-all shadow-lg shadow-red-500/5"
+                  title="Reiniciar Base de Datos"
+                >
+                  <Database size={16} />
                 </button>
                 <button 
                   onClick={async () => {

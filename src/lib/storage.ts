@@ -2,11 +2,11 @@ import type { Movimiento, ClienteMRR, Proyecto, Deuda, Presupuesto } from '../ty
 import { mockMovimientos, mockClientesMRR, mockProyectos, mockDeudas, mockPresupuestos } from './mockData';
 
 const KEYS = {
-  MOVIMIENTOS: 'finance_v15_movimientos',
-  CLIENTES_MRR: 'finance_v15_clientes_mrr',
-  PROYECTOS: 'finance_v15_proyectos',
-  DEUDAS: 'finance_v15_deudas',
-  PRESUPUESTOS: 'finance_v15_presupuestos',
+  MOVIMIENTOS: 'finance_v16_movimientos',
+  CLIENTES_MRR: 'finance_v16_clientes_mrr',
+  PROYECTOS: 'finance_v16_proyectos',
+  DEUDAS: 'finance_v16_deudas',
+  PRESUPUESTOS: 'finance_v16_presupuestos',
 };
 
 export const loadData = () => {
