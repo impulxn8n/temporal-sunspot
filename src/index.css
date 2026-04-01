@@ -1,0 +1,71 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", "system-ui", "Avenir", "Helvetica", "Arial", "sans-serif";
+  --color-brand-income: #10b981; /* Emerald */
+  --color-brand-expense: #f43f5e; /* Rose */
+  --color-brand-gold: #f59e0b; /* Amber */
+  --color-brand-primary: #3b82f6; /* Electric Blue */
+  --color-brand-secondary: #8b5cf6; /* Metallic Purple */
+  --color-brand-bg: #050508;
+  --color-brand-card: #0a0a0f;
+  --color-brand-border: #1a1a2b;
+}
+
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: dark;
+  color: #f8fafc;
+  background-color: #050505;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  place-content: center;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+#root {
+  width: 100%;
+}
+
+.card-finance {
+  background: #0f0f0f;
+  border: 1px solid #1f1f1f;
+  border-radius: 24px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-finance:hover {
+  border-color: #333;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px -10px rgba(43, 97, 255, 0.1);
+}
+
+.text-gradient-primary {
+  background: linear-gradient(135deg, #2b61ff 0%, #6344ff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.bg-liquid {
+  background: linear-gradient(135deg, rgba(43,97,255,0.1) 0%, rgba(99,68,255,0.1) 100%);
+}
+
+.text-gradient-gold {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
