@@ -15,6 +15,7 @@ import { GoogleOAuthProvider } from '@react-oauth/google';
 import { PrivateAccessProvider, usePrivateAccessContext } from './context/PrivateAccessContext';
 
 
+// SM DIGITALS - V1.1.0 - Cloud Sync & Fixed Data
 const CLIENT_ID = "939085237274-8ko3328og8njsfsrgptmb04gpos63t6b.apps.googleusercontent.com";
 
 const AppContent = () => {
