@@ -68,3 +68,23 @@ export const getSpreadsheetIdByName = async (accessToken: string, name: string) 
   const data = await response.json();
   return data.files?.[0]?.id || null;
 };
+
+export const getSheetValues = async (
+  accessToken: string,
+  spreadsheetId: string,
+  range: string
+) => {
+  const url = `${GOOGLE_SHEETS_API}/${spreadsheetId}/values/${range}`;
+  
+  const response = await fetch(url, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+
+  if (!response.ok) {
+    const err = await response.json();
+    throw new Error(err.error?.message || 'Error fetching sheet values');
+  }
+
+  const data = await response.json();
+  return data.values || [];
+};

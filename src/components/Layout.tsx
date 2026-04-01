@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Receipt, Users, Briefcase, CreditCard, PieChart, PlusCircle, Sparkles, Calendar, Trash2, Cloud, RefreshCw, Menu, X, LogOut } from 'lucide-react';
+import { LayoutDashboard, Receipt, Users, Briefcase, CreditCard, PieChart, PlusCircle, Sparkles, Calendar, Trash2, Cloud, RefreshCw, Menu, X, LogOut, CloudDownload } from 'lucide-react';
 import { useGoogleAuth } from '../hooks/useGoogleAuth';
 import { deleteFinanceCalendar } from '../lib/googleCalendar';
 import { useFinance } from '../context/FinanceContext';
@@ -20,7 +20,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   const location = useLocation();
   const { login, logout, isConnected, accessToken } = useGoogleAuth();
   const { lock } = usePrivateAccess();
-  const { syncAllToGoogleSheets } = useFinance();
+  const { syncAllToGoogleSheets, importAllFromGoogleSheets } = useFinance();
   const [isSyncing, setIsSyncing] = React.useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
 
@@ -87,18 +87,38 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                     setIsSyncing(true);
                     try {
                       await syncAllToGoogleSheets(accessToken!);
-                      alert(`✅ Sincronizado con éxito en el archivo "Finanzas SM DIGITALS"`);
+                      alert(`✅ Datos SUBIDOS con éxito a Google Sheets.`);
                     } catch (e: any) {
-                      alert(`❌ Error al sincronizar: ${e.message}`);
+                      alert(`❌ Error al subir: ${e.message}`);
                     } finally {
                       setIsSyncing(false);
                     }
                   }}
                   disabled={isSyncing}
                   className="mt-8 p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 rounded-2xl hover:bg-emerald-500 hover:text-white transition-all shadow-lg shadow-emerald-500/5 disabled:opacity-50"
-                  title="Sincronizar todo a Google Sheets"
+                  title="Subir todo a Google Sheets (Push)"
                 >
                   {isSyncing ? <RefreshCw size={16} className="animate-spin" /> : <Cloud size={16} />}
+                </button>
+                <button 
+                  onClick={async () => {
+                    if (isSyncing) return;
+                    if (!confirm('¿Descargar datos de la nube? Esto sobrescribirá tus datos locales con los de Google Sheets.')) return;
+                    setIsSyncing(true);
+                    try {
+                      await importAllFromGoogleSheets(accessToken!);
+                      alert(`✅ Datos DESCARGADOS con éxito desde Google Sheets.`);
+                    } catch (e: any) {
+                      alert(`❌ Error al descargar: ${e.message}`);
+                    } finally {
+                      setIsSyncing(false);
+                    }
+                  }}
+                  disabled={isSyncing}
+                  className="mt-8 p-3 bg-blue-500/10 border border-blue-500/20 text-blue-400 rounded-2xl hover:bg-blue-500 hover:text-white transition-all shadow-lg shadow-blue-500/5 disabled:opacity-50"
+                  title="Descargar todo de Google Sheets (Pull)"
+                >
+                  {isSyncing ? <RefreshCw size={16} className="animate-spin" /> : <CloudDownload size={16} />}
                 </button>
                 <button 
                   onClick={async () => {

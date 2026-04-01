@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useMemo } from 'react';
 import type { Movimiento, ClienteMRR, Proyecto, Deuda, Presupuesto } from '../types';
 import { loadData, saveData } from '../lib/storage';
-import { createFinanceSpreadsheet, updateSheetValues, getSpreadsheetIdByName } from '../lib/googleSheets';
+import { createFinanceSpreadsheet, updateSheetValues, getSpreadsheetIdByName, getSheetValues } from '../lib/googleSheets';
 
 interface FinanceContextType {
   movimientos: Movimiento[];
@@ -14,6 +14,7 @@ interface FinanceContextType {
   setSelectedPeriod: (period: string) => void;
   periods: string[];
   syncAllToGoogleSheets: (accessToken: string) => Promise<string>;
+  importAllFromGoogleSheets: (accessToken: string) => Promise<void>;
   addMovimiento: (mov: Omit<Movimiento, 'id' | 'created_at' | 'periodo' | 'año' | 'mes'>) => Movimiento;
   addProyecto: (proyecto: Omit<Proyecto, 'id'>, syncCalendar?: boolean) => void;
   registrarPagoProyecto: (projectId: string, amount: number, method: string) => void;
@@ -148,6 +149,65 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     return p.length > 0 ? p : [new Date().toISOString().substring(0, 7)];
   }, [movimientos]);
 
+  const importAllFromGoogleSheets = useCallback(async (accessToken: string) => {
+    const spreadsheetId = await getSpreadsheetIdByName(accessToken, 'Finanzas SM DIGITALS');
+    if (!spreadsheetId) throw new Error('No se encontró el archivo "Finanzas SM DIGITALS" en tu Google Drive.');
+
+    // Fetch values for all sheets
+    const [movs, clients, projs, debts, budgets] = await Promise.all([
+      getSheetValues(accessToken, spreadsheetId, 'Movimientos!A2:M'),
+      getSheetValues(accessToken, spreadsheetId, 'Clientes_MRR!A2:G'),
+      getSheetValues(accessToken, spreadsheetId, 'Proyectos!A2:I'),
+      getSheetValues(accessToken, spreadsheetId, 'Deudas!A2:I'),
+      getSheetValues(accessToken, spreadsheetId, 'Presupuestos!A2:F'),
+    ]);
+
+    // Map rows to objects
+    const mappedMovs: Movimiento[] = movs.map((row: any[]) => ({
+      id: row[0], fecha: row[1], periodo: row[2], unidad: row[3], tipo_movimiento: row[4],
+      categoria: row[5], subcategoria: row[6], cliente_proveedor: row[7], descripcion: row[8],
+      metodo_pago: row[9], monto: Number(row[10]), estado: row[11], cuenta: row[12],
+      created_at: new Date().toISOString()
+    }));
+
+    const mappedClients: ClienteMRR[] = clients.map((row: any[]) => ({
+      id: row[0], cliente: row[1], servicio: row[2], valor_mensual: Number(row[3]),
+      dia_cobro: Number(row[4]), estado: row[5], metodo_pago: row[6]
+    }));
+
+    const mappedProjs: Proyecto[] = projs.map((row: any[]) => ({
+      id: row[0], cliente: row[1], nombre_proyecto: row[2], tipo: row[3],
+      valor_total: Number(row[4]), cobrado: Number(row[5]), pendiente: Number(row[6]),
+      estado: row[7], fase: row[8]
+    }));
+
+    const mappedDebts: Deuda[] = debts.map((row: any[]) => ({
+      id: row[0], acreedor: row[1], tipo: row[2], saldo_inicial: Number(row[3]),
+      cuota_mensual: Number(row[4]), pagado: Number(row[5]), saldo_restante: Number(row[6]),
+      fecha_pago: row[7], estado: row[8]
+    }));
+
+    const mappedBudgets: Presupuesto[] = budgets.map((row: any[]) => ({
+      id: row[0], periodo: row[1], categoria: row[2], presupuesto: Number(row[3]),
+      real: Number(row[4]), diferencia: Number(row[5])
+    }));
+
+    // Update state and storage
+    if (mappedMovs.length > 0) setMovimientos(mappedMovs);
+    if (mappedClients.length > 0) setClientesMRR(mappedClients);
+    if (mappedProjs.length > 0) setProyectos(mappedProjs);
+    if (mappedDebts.length > 0) setDeudas(mappedDebts);
+    if (mappedBudgets.length > 0) setPresupuestos(mappedBudgets);
+
+    saveData({
+      movimientos: mappedMovs,
+      clientesMRR: mappedClients,
+      proyectos: mappedProjs,
+      deudas: mappedDebts,
+      presupuestos: mappedBudgets
+    });
+  }, []);
+
   const syncAllToGoogleSheets = useCallback(async (accessToken: string) => {
     let spreadsheetId = await getSpreadsheetIdByName(accessToken, 'Finanzas SM DIGITALS');
     
@@ -221,6 +281,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setSelectedPeriod,
     periods,
     syncAllToGoogleSheets,
+    importAllFromGoogleSheets,
     addMovimiento,
     addProyecto,
     registrarPagoProyecto,
