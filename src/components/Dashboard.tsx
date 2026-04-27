@@ -34,10 +34,20 @@ export const Dashboard: React.FC = () => {
           <h2 className="text-3xl lg:text-4xl font-black text-white tracking-tighter">Financial Intelligence</h2>
           <p className="text-slate-500 font-bold uppercase tracking-[0.2em] text-[8px] lg:text-[10px] mt-1">SM DIGITALS Dashboard v3.0</p>
         </div>
-        <div className="bg-[#0a0a0f] border border-white/5 p-2 rounded-2xl flex items-center shadow-2xl">
-          <PeriodSelector />
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="bg-[#0a0a0f] border border-white/5 p-2 rounded-2xl flex items-center shadow-2xl">
+            <SpaceSelector />
+          </div>
+          <div className="bg-[#0a0a0f] border border-white/5 p-2 rounded-2xl flex items-center shadow-2xl">
+            <PeriodSelector />
+          </div>
         </div>
       </header>
+
+      {/* Balance Summary Section */}
+      <BalanceCards />
+
+      {/* KPI Cards (Mini stats) */}
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 lg:gap-6">
@@ -137,6 +147,9 @@ export const Dashboard: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Cash Flow Projection */}
+      <CashFlowProjection />
     </div>
   );
 };
