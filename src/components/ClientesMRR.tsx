@@ -1,16 +1,20 @@
 import React from 'react';
 import { useFinance } from '../hooks/useFinance';
-import { Banknote, Calendar, Bell, RefreshCw } from 'lucide-react';
+import { Banknote, Calendar, Bell, RefreshCw, Plus, Wallet, Shield, TrendingUp } from 'lucide-react';
 import type { ClienteMRR } from '../types';
 import { useGoogleAuth } from '../hooks/useGoogleAuth';
 import { getOrCreateFinanceCalendar, createPaymentEvent } from '../lib/googleCalendar';
 import { useState } from 'react';
+import { AddClienteMRRModal } from './AddClienteMRRModal';
+import { calcularDistribucionCliente, calcularDistribucionMensualMRR } from '../lib/clienteCalc';
 
 export const ClientesMRR: React.FC = () => {
   const { clientesMRR } = useFinance();
+  const [showAdd, setShowAdd] = useState(false);
 
   const totalMRR = clientesMRR.filter(c => c.estado === 'Activo').reduce((acc, c) => acc + c.valor_mensual, 0);
   const totalPausado = clientesMRR.filter(c => c.estado === 'Pausado').reduce((acc, c) => acc + c.valor_mensual, 0);
+  const distMensual = calcularDistribucionMensualMRR(clientesMRR);
 
   const { isConnected, accessToken } = useGoogleAuth();
   const [syncingId, setSyncingId] = useState<string | null>(null);
@@ -102,6 +106,13 @@ export const ClientesMRR: React.FC = () => {
               <span className="sm:hidden">{syncingId === 'all' ? 'Sinc...' : 'Sync All'}</span>
             </button>
           )}
+          <button
+            onClick={() => setShowAdd(true)}
+            className="bg-brand-primary text-white px-4 lg:px-6 py-3 lg:py-4 rounded-xl lg:rounded-2xl font-black text-[9px] lg:text-[10px] uppercase tracking-widest hover:bg-brand-primary/80 transition-all flex items-center gap-2 shadow-lg shadow-brand-primary/20"
+          >
+            <Plus size={14} />
+            <span>Nuevo cliente</span>
+          </button>
           <div className="glass-card px-6 lg:px-8 py-4 lg:py-5 rounded-[24px] lg:rounded-[32px] text-right shadow-2xl relative overflow-hidden group shadow-brand-primary/5">
             <div className="absolute inset-0 bg-brand-primary/5 group-hover:opacity-100 transition-opacity" />
             <p className="text-[8px] lg:text-[10px] text-brand-primary font-black uppercase tracking-[0.3em] mb-1 relative z-10">MRR Activo</p>
@@ -117,8 +128,48 @@ export const ClientesMRR: React.FC = () => {
         </div>
       </header>
 
+      {/* Resumen de distribución mensual a bolsillos */}
+      {clientesMRR.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="glass-card p-5 rounded-[24px] relative overflow-hidden border-brand-primary/20">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-brand-primary/10 blur-[60px] -mr-12 -mt-12" />
+            <div className="flex items-center gap-2 mb-2 relative z-10">
+              <TrendingUp size={14} className="text-brand-primary" />
+              <p className="text-[9px] font-black text-brand-primary uppercase tracking-widest">Ingresos /mes</p>
+            </div>
+            <p className="text-xl font-black text-white tracking-tighter relative z-10">${distMensual.totalIngresos.toLocaleString('es-CO')}</p>
+          </div>
+          <div className="glass-card p-5 rounded-[24px] relative overflow-hidden border-amber-500/20">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/10 blur-[60px] -mr-12 -mt-12" />
+            <div className="flex items-center gap-2 mb-2 relative z-10">
+              <Wallet size={14} className="text-amber-400" />
+              <p className="text-[9px] font-black text-amber-400 uppercase tracking-widest">Bolsillo Operativo</p>
+            </div>
+            <p className="text-xl font-black text-white tracking-tighter relative z-10">${distMensual.totalOperativo.toLocaleString('es-CO')}</p>
+          </div>
+          <div className="glass-card p-5 rounded-[24px] relative overflow-hidden border-rose-500/20">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-rose-500/10 blur-[60px] -mr-12 -mt-12" />
+            <div className="flex items-center gap-2 mb-2 relative z-10">
+              <Shield size={14} className="text-rose-400" />
+              <p className="text-[9px] font-black text-rose-400 uppercase tracking-widest">Bolsillo Emergencia</p>
+            </div>
+            <p className="text-xl font-black text-white tracking-tighter relative z-10">${distMensual.totalEmergencia.toLocaleString('es-CO')}</p>
+          </div>
+          <div className="glass-card p-5 rounded-[24px] relative overflow-hidden border-emerald-500/20">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 blur-[60px] -mr-12 -mt-12" />
+            <div className="flex items-center gap-2 mb-2 relative z-10">
+              <TrendingUp size={14} className="text-emerald-400" />
+              <p className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">Dinero Libre</p>
+            </div>
+            <p className="text-xl font-black text-white tracking-tighter relative z-10">${distMensual.totalLibre.toLocaleString('es-CO')}</p>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-        {clientesMRR.map((cliente) => (
+        {clientesMRR.map((cliente) => {
+          const dist = calcularDistribucionCliente(cliente);
+          return (
           <div key={cliente.id} className="glass-card p-6 lg:p-8 rounded-[32px] lg:rounded-[40px] hover:border-white/10 transition-all group relative overflow-hidden shadow-brand-primary/5">
             <div className="absolute top-0 right-0 w-32 h-32 bg-brand-primary/5 blur-[80px] -mr-16 -mt-16 group-hover:bg-brand-primary/10 transition-all duration-700 pointer-events-none" />
             
@@ -151,7 +202,26 @@ export const ClientesMRR: React.FC = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 mt-8">
+            {/* Distribución del cobro */}
+            <div className="mt-5 bg-black/30 rounded-2xl border border-white/5 p-4 space-y-2 relative z-10">
+              <p className="text-[9px] font-black text-brand-primary uppercase tracking-widest mb-2">Distribución del cobro</p>
+              {dist.costoOperativo > 0 && (
+                <div className="flex justify-between items-center text-[10px]">
+                  <span className="text-amber-400 flex items-center gap-1.5"><Wallet size={10} /> Operativo</span>
+                  <span className="text-white font-black">${dist.costoOperativo.toLocaleString('es-CO')}</span>
+                </div>
+              )}
+              <div className="flex justify-between items-center text-[10px]">
+                <span className="text-rose-400 flex items-center gap-1.5"><Shield size={10} /> Emergencia</span>
+                <span className="text-white font-black">${dist.ahorro.toLocaleString('es-CO')}</span>
+              </div>
+              <div className="flex justify-between items-center text-[10px] pt-2 border-t border-white/5">
+                <span className="text-emerald-400 flex items-center gap-1.5"><TrendingUp size={10} /> Libre</span>
+                <span className="text-emerald-400 font-black">${dist.dineroLibre.toLocaleString('es-CO')}</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 mt-6">
               <button className="py-3 lg:py-4 bg-white/5 border border-white/5 hover:border-white/20 hover:bg-white/10 text-slate-400 hover:text-white text-[8px] lg:text-[9px] font-black rounded-xl lg:rounded-2xl transition-all uppercase tracking-widest shadow-xl">
                 Auditar
               </button>
@@ -183,8 +253,11 @@ export const ClientesMRR: React.FC = () => {
               )}
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
+
+      <AddClienteMRRModal open={showAdd} onClose={() => setShowAdd(false)} />
     </div>
   );
 };

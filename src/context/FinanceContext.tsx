@@ -40,6 +40,9 @@ interface FinanceContextType {
     cuenta?: string;
   }) => void;
   removeTransferencia: (pairId: string) => void;
+  addClienteMRR: (cliente: Omit<ClienteMRR, 'id'>) => ClienteMRR;
+  updateClienteMRR: (id: string, updates: Partial<Omit<ClienteMRR, 'id'>>) => void;
+  removeClienteMRR: (id: string) => void;
   addProyecto: (proyecto: Omit<Proyecto, 'id'>, syncCalendar?: boolean) => void;
   registrarPagoProyecto: (projectId: string, amount: number, method: string) => void;
   updateDebt: (debtId: string, paymentAmount: number) => void;
@@ -180,6 +183,32 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setMovimientos(prev => {
       const updated = prev.filter(m => m.transfer_pair_id !== pairId);
       saveData({ movimientos: updated });
+      return updated;
+    });
+  }, []);
+
+  const addClienteMRR = useCallback((cliente: Omit<ClienteMRR, 'id'>) => {
+    const newCliente: ClienteMRR = { ...cliente, id: crypto.randomUUID() };
+    setClientesMRR(prev => {
+      const updated = [...prev, newCliente];
+      saveData({ clientesMRR: updated });
+      return updated;
+    });
+    return newCliente;
+  }, []);
+
+  const updateClienteMRR = useCallback((id: string, updates: Partial<Omit<ClienteMRR, 'id'>>) => {
+    setClientesMRR(prev => {
+      const updated = prev.map(c => (c.id === id ? { ...c, ...updates } : c));
+      saveData({ clientesMRR: updated });
+      return updated;
+    });
+  }, []);
+
+  const removeClienteMRR = useCallback((id: string) => {
+    setClientesMRR(prev => {
+      const updated = prev.filter(c => c.id !== id);
+      saveData({ clientesMRR: updated });
       return updated;
     });
   }, []);
@@ -524,6 +553,9 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     addMovimiento,
     addTransferencia,
     removeTransferencia,
+    addClienteMRR,
+    updateClienteMRR,
+    removeClienteMRR,
     addProyecto,
     registrarPagoProyecto,
     updateDebt,

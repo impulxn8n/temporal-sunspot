@@ -3,7 +3,13 @@ import type { Space, Unidad, Movimiento } from '../types';
 export const SPACE_IDS = {
   PERSONAL: 'sp_personal',
   BUSINESS: 'sp_smdigitals',
+  BOLS_OPERATIVO: 'sp_bols_operativo',
+  BOLS_EMERGENCIA: 'sp_bols_emergencia',
 } as const;
+
+// Espacios "bolsillo" que viven dentro del negocio. Sirven para reservar dinero del cobro
+// recurrente (operativos fijos + colchón de emergencia) y separarlos contablemente.
+export const BOLSILLO_SPACE_IDS: string[] = [SPACE_IDS.BOLS_OPERATIVO, SPACE_IDS.BOLS_EMERGENCIA];
 
 export const defaultSpaces: Space[] = [
   {
@@ -21,6 +27,22 @@ export const defaultSpaces: Space[] = [
     color: '#10B981',
     icon: 'Briefcase',
     created_at: '2026-01-01T00:00:00Z',
+  },
+  {
+    id: SPACE_IDS.BOLS_OPERATIVO,
+    name: 'Bolsillo Operativo',
+    type: 'business',
+    color: '#F59E0B',
+    icon: 'Wallet',
+    created_at: '2026-04-01T00:00:00Z',
+  },
+  {
+    id: SPACE_IDS.BOLS_EMERGENCIA,
+    name: 'Bolsillo Emergencia',
+    type: 'business',
+    color: '#EF4444',
+    icon: 'Shield',
+    created_at: '2026-04-01T00:00:00Z',
   },
 ];
 

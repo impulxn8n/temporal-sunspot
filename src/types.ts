@@ -46,6 +46,11 @@ export interface Movimiento {
   transfer_counterpart_space_id?: string;
 }
 
+// Reglas de distribución de un cobro recurrente:
+//  - 'margen_30': Costo operativo fijo + (ahorro_pct % del margen). Default 150.000 + 30%.
+//  - 'pago_30':   Solo se separa ahorro_pct % del pago total (sin costo operativo). Caso Impulsy.
+export type ReglaAhorro = 'margen_30' | 'pago_30';
+
 export interface ClienteMRR {
   id: string;
   cliente: string;
@@ -56,6 +61,9 @@ export interface ClienteMRR {
   fecha_inicio: string;
   fecha_fin?: string;
   metodo_pago: string;
+  costo_operativo?: number;   // default 150_000 si regla = margen_30, 0 si regla = pago_30
+  regla_ahorro?: ReglaAhorro; // default 'margen_30'
+  ahorro_pct?: number;        // default 30
 }
 
 export interface Proyecto {

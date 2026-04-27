@@ -3,12 +3,12 @@ import { mockMovimientos, mockClientesMRR, mockProyectos, mockDeudas, mockPresup
 import { defaultSpaces, migrateMovimientoSpace } from './spaces';
 
 const KEYS = {
-  MOVIMIENTOS: 'finance_v19_movimientos',
-  CLIENTES_MRR: 'finance_v19_clientes_mrr',
-  PROYECTOS: 'finance_v19_proyectos',
-  DEUDAS: 'finance_v19_deudas',
-  PRESUPUESTOS: 'finance_v19_presupuestos',
-  SPACES: 'finance_v19_spaces',
+  MOVIMIENTOS: 'finance_v20_movimientos',
+  CLIENTES_MRR: 'finance_v20_clientes_mrr',
+  PROYECTOS: 'finance_v20_proyectos',
+  DEUDAS: 'finance_v20_deudas',
+  PRESUPUESTOS: 'finance_v20_presupuestos',
+  SPACES: 'finance_v20_spaces',
 };
 
 export const loadData = () => {
