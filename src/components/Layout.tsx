@@ -1,10 +1,11 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Receipt, Users, Briefcase, CreditCard, PieChart, PlusCircle, Sparkles, Calendar, Trash2, Cloud, RefreshCw, Menu, X, LogOut, CloudDownload, Database } from 'lucide-react';
+import { LayoutDashboard, Receipt, Users, Briefcase, CreditCard, PieChart, PlusCircle, Sparkles, Calendar, Trash2, Cloud, RefreshCw, Menu, X, LogOut, CloudDownload, Database, ArrowLeftRight } from 'lucide-react';
 import { useGoogleAuth } from '../hooks/useGoogleAuth';
 import { deleteFinanceCalendar } from '../lib/googleCalendar';
 import { useFinance } from '../context/FinanceContext';
 import { usePrivateAccess } from '../hooks/usePrivateAccess';
+import { TransferModal } from './TransferModal';
 
 const navItems = [
   { name: 'Dashboard', path: '/', icon: LayoutDashboard },
@@ -23,6 +24,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   const { syncAllToGoogleSheets, importAllFromGoogleSheets } = useFinance();
   const [isSyncing, setIsSyncing] = React.useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+  const [isTransferOpen, setIsTransferOpen] = React.useState(false);
 
   return (
     <div className="flex h-screen bg-[#050508] text-slate-200 overflow-hidden font-sans">
@@ -181,6 +183,13 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
             <span className="text-xs tracking-[0.2em] uppercase">Registrar</span>
           </Link>
           <button
+            onClick={() => { setIsTransferOpen(true); setIsMobileMenuOpen(false); }}
+            className="flex items-center justify-center gap-2 w-full bg-brand-primary/10 hover:bg-brand-primary/20 text-brand-primary font-black py-3.5 rounded-2xl transition-all border border-brand-primary/20"
+          >
+            <ArrowLeftRight size={16} />
+            <span className="text-[10px] tracking-[0.2em] uppercase">Transferir entre espacios</span>
+          </button>
+          <button
             onClick={() => {
               if (confirm('¿Cerrar sesión en SM DIGITALS?')) lock();
             }}
@@ -198,6 +207,8 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
           {children}
         </div>
       </main>
+
+      <TransferModal open={isTransferOpen} onClose={() => setIsTransferOpen(false)} />
     </div>
   );
 };
