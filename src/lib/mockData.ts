@@ -214,8 +214,8 @@ export const mockProyectos: Proyecto[] = [
 export const mockDeudas: Deuda[] = [
   { id: 'd1', acreedor: 'Víctor', tipo: 'Préstamo', saldo_inicial: 15000000, cuota_mensual: 500000, pagado: 1000000, saldo_restante: 14000000, fecha_pago: '2026-03-15', estado: 'Al día' },
   { id: 'd2', acreedor: 'Banco Nacional', tipo: 'Crédito Bancario', saldo_inicial: 30000000, cuota_mensual: 900000, pagado: 2000000, saldo_restante: 28000000, fecha_pago: '2026-03-30', estado: 'Al día' },
-  { id: 'd3', acreedor: 'Wilson', tipo: 'Préstamo personal', saldo_inicial: 272000, cuota_mensual: 0, pagado: 120000, saldo_restante: 152000, fecha_pago: '2026-03-25', estado: 'Al día' },
-  { id: 'd4', acreedor: 'José Candela', tipo: 'Préstamo personal', saldo_inicial: 400000, cuota_mensual: 0, pagado: 125000, saldo_restante: 275000, fecha_pago: '2026-03-25', estado: 'Al día' },
+  { id: 'd3', acreedor: 'Wilson', tipo: 'Préstamo personal', saldo_inicial: 272000, cuota_mensual: 50000, pagado: 120000, saldo_restante: 152000, fecha_pago: '2026-03-25', estado: 'Al día' },
+  { id: 'd4', acreedor: 'José Candela', tipo: 'Préstamo personal', saldo_inicial: 400000, cuota_mensual: 100000, pagado: 125000, saldo_restante: 275000, fecha_pago: '2026-03-25', estado: 'Al día' },
 ];
 
 export const mockPresupuestos: Presupuesto[] = [

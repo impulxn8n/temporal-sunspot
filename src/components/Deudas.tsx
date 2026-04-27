@@ -69,13 +69,21 @@ export const Deudas: React.FC = () => {
 
               <div className="flex flex-col gap-3 relative z-10">
                 <button 
-                  onClick={() => updateDebt(deuda.id, deuda.cuota_mensual)}
+                  onClick={() => {
+                    const amount = deuda.cuota_mensual > 0 
+                      ? deuda.cuota_mensual 
+                      : Number(window.prompt(`Monto a pagar para ${deuda.acreedor}:`, deuda.saldo_restante.toString()));
+                    if (amount > 0) updateDebt(deuda.id, amount);
+                  }}
                   className="w-full bg-brand-primary text-white font-black py-5 rounded-2xl hover:bg-brand-primary/80 transition-all shadow-2xl active:scale-95 uppercase tracking-widest text-[10px]"
                 >
-                  EFECTUAR PAGO DE CUOTA
+                  {deuda.cuota_mensual > 0 ? 'EFECTUAR PAGO DE CUOTA' : 'EFECTUAR ABONO PERSONALIZADO'}
                 </button>
                 <button 
-                  onClick={() => undoDebtPayment(deuda.id, deuda.cuota_mensual)}
+                  onClick={() => {
+                    const amount = deuda.cuota_mensual > 0 ? deuda.cuota_mensual : deuda.pagado;
+                    undoDebtPayment(deuda.id, amount);
+                  }}
                   className="w-full bg-[#111111] border border-[#222222] text-slate-500 hover:text-white py-3 rounded-xl transition-all flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest"
                 >
                   <RotateCcw size={14} />
