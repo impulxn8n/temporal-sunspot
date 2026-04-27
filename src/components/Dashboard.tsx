@@ -6,6 +6,9 @@ import {
 } from 'recharts';
 import { TrendingUp, TrendingDown, DollarSign, Users, AlertCircle } from 'lucide-react';
 import { PeriodSelector } from './PeriodSelector';
+import { SpaceSelector } from './SpaceSelector';
+import { BalanceCards } from './BalanceCards';
+import { CashFlowProjection } from './CashFlowProjection';
 
 export const Dashboard: React.FC = () => {
   const { stats } = useFinance();

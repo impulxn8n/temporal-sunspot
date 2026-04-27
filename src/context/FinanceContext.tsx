@@ -1,7 +1,18 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useMemo } from 'react';
-import type { Movimiento, ClienteMRR, Proyecto, Deuda, Presupuesto } from '../types';
+import type { Movimiento, ClienteMRR, Proyecto, Deuda, Presupuesto, Space, SpaceView } from '../types';
 import { loadData, saveData } from '../lib/storage';
+import { spaceIdToUnidad, unidadToSpaceId } from '../lib/spaces';
 import { createFinanceSpreadsheet, updateSheetValues, getSpreadsheetIdByName, getSheetValues } from '../lib/googleSheets';
+
+export interface SpaceBalance {
+  spaceId: string;
+  income: number;          // ingresos reales (sin transferencias)
+  expenses: number;        // gastos reales (sin transferencias)
+  transfersIn: number;     // entradas por transferencia
+  transfersOut: number;    // salidas por transferencia
+  balance: number;         // income - expenses + transfersIn - transfersOut
+  netCashFlow: number;     // income - expenses (sin transferencias)
+}
 
 interface FinanceContextType {
   movimientos: Movimiento[];
@@ -10,16 +21,31 @@ interface FinanceContextType {
   proyectos: Proyecto[];
   deudas: Deuda[];
   presupuestos: Presupuesto[];
+  spaces: Space[];
+  selectedView: SpaceView;
+  setSelectedView: (view: SpaceView) => void;
   selectedPeriod: string;
   setSelectedPeriod: (period: string) => void;
   periods: string[];
   syncAllToGoogleSheets: (accessToken: string) => Promise<string>;
   importAllFromGoogleSheets: (accessToken: string) => Promise<void>;
-  addMovimiento: (mov: Omit<Movimiento, 'id' | 'created_at' | 'periodo' | 'año' | 'mes'>) => Movimiento;
+  addMovimiento: (mov: Omit<Movimiento, 'id' | 'created_at' | 'periodo' | 'año' | 'mes' | 'space_id'> & { space_id?: string }) => Movimiento;
+  addTransferencia: (params: {
+    fromSpaceId: string;
+    toSpaceId: string;
+    monto: number;
+    fecha: string;
+    descripcion?: string;
+    metodoPago?: string;
+    cuenta?: string;
+  }) => void;
+  removeTransferencia: (pairId: string) => void;
   addProyecto: (proyecto: Omit<Proyecto, 'id'>, syncCalendar?: boolean) => void;
   registrarPagoProyecto: (projectId: string, amount: number, method: string) => void;
   updateDebt: (debtId: string, paymentAmount: number) => void;
   undoDebtPayment: (debtId: string, paymentAmount: number) => void;
+  balancesBySpace: Record<string, SpaceBalance>;
+  globalBalance: SpaceBalance;
   stats: {
     totalIncome: number;
     totalExpenses: number;
@@ -33,12 +59,30 @@ interface FinanceContextType {
 
 const FinanceContext = createContext<FinanceContextType | undefined>(undefined);
 
+// Determina si un movimiento aplica a la vista actual.
+const matchesView = (m: Movimiento, view: SpaceView, spaces: Space[]): boolean => {
+  if (view === 'global') return true;
+  if (view === 'personal') {
+    const personalIds = new Set(spaces.filter(s => s.type === 'personal').map(s => s.id));
+    return personalIds.has(m.space_id);
+  }
+  if (view === 'business') {
+    const businessIds = new Set(spaces.filter(s => s.type === 'business').map(s => s.id));
+    return businessIds.has(m.space_id);
+  }
+  return m.space_id === view;
+};
+
+const isReal = (m: Movimiento) => m.tipo_movimiento !== 'Transferencia';
+
 export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [movimientos, setMovimientos] = useState<Movimiento[]>([]);
   const [clientesMRR, setClientesMRR] = useState<ClienteMRR[]>([]);
   const [proyectos, setProyectos] = useState<Proyecto[]>([]);
   const [deudas, setDeudas] = useState<Deuda[]>([]);
   const [presupuestos, setPresupuestos] = useState<Presupuesto[]>([]);
+  const [spaces, setSpaces] = useState<Space[]>([]);
+  const [selectedView, setSelectedView] = useState<SpaceView>('global');
   const [selectedPeriod, setSelectedPeriod] = useState<string>(new Date().toISOString().substring(0, 7));
 
   useEffect(() => {
@@ -48,13 +92,15 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setProyectos(data.proyectos);
     setDeudas(data.deudas);
     setPresupuestos(data.presupuestos);
+    setSpaces(data.spaces);
   }, []);
 
-  const addMovimiento = useCallback((mov: Omit<Movimiento, 'id' | 'created_at' | 'periodo' | 'año' | 'mes'>) => {
+  const addMovimiento = useCallback((mov: Omit<Movimiento, 'id' | 'created_at' | 'periodo' | 'año' | 'mes' | 'space_id'> & { space_id?: string }) => {
     const date = new Date(mov.fecha);
     const id = crypto.randomUUID();
     const newMov: Movimiento = {
       ...mov,
+      space_id: mov.space_id ?? unidadToSpaceId(mov.unidad),
       id,
       created_at: new Date().toISOString(),
       periodo: mov.fecha.substring(0, 7),
@@ -68,6 +114,74 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       return updated;
     });
     return newMov;
+  }, []);
+
+  const addTransferencia = useCallback((params: {
+    fromSpaceId: string;
+    toSpaceId: string;
+    monto: number;
+    fecha: string;
+    descripcion?: string;
+    metodoPago?: string;
+    cuenta?: string;
+  }) => {
+    const { fromSpaceId, toSpaceId, monto, fecha, descripcion = '', metodoPago = 'Transferencia', cuenta = 'Bancolombia' } = params;
+    if (fromSpaceId === toSpaceId) throw new Error('Origen y destino no pueden ser el mismo espacio.');
+    if (monto <= 0) throw new Error('El monto debe ser mayor a 0.');
+
+    const date = new Date(fecha);
+    const periodo = fecha.substring(0, 7);
+    const pairId = crypto.randomUUID();
+    const baseDescripcion = descripcion || `Transferencia interna`;
+
+    const outMov: Movimiento = {
+      id: crypto.randomUUID(),
+      fecha,
+      periodo,
+      año: date.getFullYear(),
+      mes: date.getMonth() + 1,
+      unidad: spaceIdToUnidad(fromSpaceId),
+      space_id: fromSpaceId,
+      tipo_movimiento: 'Transferencia',
+      categoria: 'Transferencia',
+      subcategoria: 'Salida',
+      cliente_proveedor: 'Transferencia interna',
+      descripcion: baseDescripcion,
+      metodo_pago: metodoPago,
+      monto,
+      recurrente: false,
+      estado: 'Pagado',
+      impacto: 'Core',
+      cuenta,
+      created_at: new Date().toISOString(),
+      transfer_pair_id: pairId,
+      transfer_direction: 'out',
+      transfer_counterpart_space_id: toSpaceId,
+    };
+
+    const inMov: Movimiento = {
+      ...outMov,
+      id: crypto.randomUUID(),
+      unidad: spaceIdToUnidad(toSpaceId),
+      space_id: toSpaceId,
+      subcategoria: 'Entrada',
+      transfer_direction: 'in',
+      transfer_counterpart_space_id: fromSpaceId,
+    };
+
+    setMovimientos(prev => {
+      const updated = [...prev, outMov, inMov];
+      saveData({ movimientos: updated });
+      return updated;
+    });
+  }, []);
+
+  const removeTransferencia = useCallback((pairId: string) => {
+    setMovimientos(prev => {
+      const updated = prev.filter(m => m.transfer_pair_id !== pairId);
+      saveData({ movimientos: updated });
+      return updated;
+    });
   }, []);
 
   const updateDebt = useCallback((debtId: string, paymentAmount: number) => {
@@ -116,15 +230,15 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
       const newCobrado = project.cobrado + amount;
       const newPendiente = Math.max(0, project.valor_total - newCobrado);
-      
-      const updatedProyectos = prev.map(p => 
+
+      const updatedProyectos = prev.map(p =>
         p.id === projectId ? { ...p, cobrado: newCobrado, pendiente: newPendiente } : p
       );
-      
-      // Registrar el movimiento de ingreso
+
       addMovimiento({
         fecha: new Date().toISOString().split('T')[0],
         unidad: 'SM DIGITALS',
+        space_id: 'sp_smdigitals',
         tipo_movimiento: 'Ingreso',
         categoria: 'Proyecto',
         subcategoria: project.tipo,
@@ -149,11 +263,67 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     return p.length > 0 ? p : [new Date().toISOString().substring(0, 7)];
   }, [movimientos]);
 
+  // Balance por espacio (acumulado histórico, no por período)
+  const balancesBySpace = useMemo(() => {
+    const result: Record<string, SpaceBalance> = {};
+    for (const sp of spaces) {
+      result[sp.id] = {
+        spaceId: sp.id,
+        income: 0,
+        expenses: 0,
+        transfersIn: 0,
+        transfersOut: 0,
+        balance: 0,
+        netCashFlow: 0,
+      };
+    }
+    for (const m of movimientos) {
+      const bucket = result[m.space_id];
+      if (!bucket) continue;
+      if (m.estado !== 'Pagado') continue;
+
+      if (m.tipo_movimiento === 'Transferencia') {
+        if (m.transfer_direction === 'in') bucket.transfersIn += m.monto;
+        else if (m.transfer_direction === 'out') bucket.transfersOut += m.monto;
+      } else if (m.tipo_movimiento === 'Ingreso') {
+        bucket.income += m.monto;
+      } else if (m.tipo_movimiento === 'Gasto') {
+        bucket.expenses += m.monto;
+      }
+    }
+    for (const id in result) {
+      const b = result[id];
+      b.netCashFlow = b.income - b.expenses;
+      b.balance = b.netCashFlow + b.transfersIn - b.transfersOut;
+    }
+    return result;
+  }, [movimientos, spaces]);
+
+  const globalBalance = useMemo<SpaceBalance>(() => {
+    const agg: SpaceBalance = {
+      spaceId: 'global',
+      income: 0,
+      expenses: 0,
+      transfersIn: 0,
+      transfersOut: 0,
+      balance: 0,
+      netCashFlow: 0,
+    };
+    for (const id in balancesBySpace) {
+      const b = balancesBySpace[id];
+      agg.income += b.income;
+      agg.expenses += b.expenses;
+      // Las transferencias internas se cancelan en la vista global
+    }
+    agg.netCashFlow = agg.income - agg.expenses;
+    agg.balance = agg.netCashFlow;
+    return agg;
+  }, [balancesBySpace]);
+
   const importAllFromGoogleSheets = useCallback(async (accessToken: string) => {
     const spreadsheetId = await getSpreadsheetIdByName(accessToken, 'Finanzas SM DIGITALS');
     if (!spreadsheetId) throw new Error('No se encontró el archivo "Finanzas SM DIGITALS" en tu Google Drive.');
 
-    // Fetch values for all sheets
     const [movs, clients, projs, debts, budgets] = await Promise.all([
       getSheetValues(accessToken, spreadsheetId, 'Movimientos!A2:M'),
       getSheetValues(accessToken, spreadsheetId, 'Clientes_MRR!A2:G'),
@@ -162,23 +332,47 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       getSheetValues(accessToken, spreadsheetId, 'Presupuestos!A2:F'),
     ]);
 
-    // Map rows to objects
-    const mappedMovs: Movimiento[] = movs.map((row: any[]) => ({
-      id: row[0], fecha: row[1], periodo: row[2], unidad: row[3], tipo_movimiento: row[4],
-      categoria: row[5], subcategoria: row[6], cliente_proveedor: row[7], descripcion: row[8],
-      metodo_pago: row[9], monto: Number(row[10]), estado: row[11], cuenta: row[12],
-      created_at: new Date().toISOString()
-    }));
+    const mappedMovs: Movimiento[] = movs.map((row: any[]) => {
+      const unidad = row[3] as Movimiento['unidad'];
+      const space_id =
+        unidad === 'SM DIGITALS' ? 'sp_smdigitals'
+        : unidad === 'Marca Personal' ? 'sp_marca_personal'
+        : 'sp_personal';
+      const date = new Date(row[1] || new Date());
+      return {
+        id: row[0],
+        fecha: row[1],
+        periodo: row[2],
+        año: date.getFullYear(),
+        mes: date.getMonth() + 1,
+        unidad,
+        space_id,
+        tipo_movimiento: row[4],
+        categoria: row[5],
+        subcategoria: row[6],
+        cliente_proveedor: row[7],
+        descripcion: row[8],
+        metodo_pago: row[9],
+        monto: Number(row[10]),
+        recurrente: false,
+        estado: row[11],
+        impacto: 'Core',
+        cuenta: row[12],
+        created_at: new Date().toISOString(),
+      };
+    });
 
     const mappedClients: ClienteMRR[] = clients.map((row: any[]) => ({
       id: row[0], cliente: row[1], servicio: row[2], valor_mensual: Number(row[3]),
-      dia_cobro: Number(row[4]), estado: row[5], metodo_pago: row[6]
+      dia_cobro: Number(row[4]), estado: row[5], metodo_pago: row[6],
+      fecha_inicio: row[7] || new Date().toISOString().split('T')[0],
     }));
 
     const mappedProjs: Proyecto[] = projs.map((row: any[]) => ({
       id: row[0], cliente: row[1], nombre_proyecto: row[2], tipo: row[3],
-      valor_total: Number(row[4]), cobrado: Number(row[5]), pendiente: Number(row[6]),
-      estado: row[7], fase: row[8]
+      valor_total: Number(row[4]), anticipo: 0, cobrado: Number(row[5]), pendiente: Number(row[6]),
+      fecha_inicio: row[7] || new Date().toISOString().split('T')[0],
+      estado: row[7], rentabilidad_estimada: 0, fase: row[8],
     }));
 
     const mappedDebts: Deuda[] = debts.map((row: any[]) => ({
@@ -188,11 +382,10 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }));
 
     const mappedBudgets: Presupuesto[] = budgets.map((row: any[]) => ({
-      id: row[0], periodo: row[1], categoria: row[2], presupuesto: Number(row[3]),
+      id: row[0], periodo: row[1], unidad: 'SM DIGITALS', categoria: row[2], presupuesto: Number(row[3]),
       real: Number(row[4]), diferencia: Number(row[5])
     }));
 
-    // Update state and storage
     if (mappedMovs.length > 0) setMovimientos(mappedMovs);
     if (mappedClients.length > 0) setClientesMRR(mappedClients);
     if (mappedProjs.length > 0) setProyectos(mappedProjs);
@@ -210,12 +403,11 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const syncAllToGoogleSheets = useCallback(async (accessToken: string) => {
     let spreadsheetId = await getSpreadsheetIdByName(accessToken, 'Finanzas SM DIGITALS');
-    
+
     if (!spreadsheetId) {
       spreadsheetId = await createFinanceSpreadsheet(accessToken, 'Finanzas SM DIGITALS');
     }
 
-    // Prepare data for each sheet
     const dataMap: Record<string, any[][]> = {
       'Movimientos': [
         ['ID', 'Fecha', 'Periodo', 'Unidad', 'Tipo', 'Categoría', 'Subcat', 'Cliente', 'Descripción', 'Método', 'Monto', 'Estado', 'Cuenta'],
@@ -239,7 +431,6 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       ]
     };
 
-    // Update all sheets
     for (const [sheetName, values] of Object.entries(dataMap)) {
       await updateSheetValues(accessToken, spreadsheetId, `${sheetName}!A1`, values);
     }
@@ -247,47 +438,71 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     return spreadsheetId;
   }, [movimientos, clientesMRR, proyectos, deudas, presupuestos]);
 
+  // Stats filtrados por vista (espacio) + período. Las transferencias se excluyen.
   const stats = useMemo(() => {
-    const filteredByPeriod = movimientos.filter(m => (m.periodo || m.fecha.substring(0, 7)) === selectedPeriod && m.estado === 'Pagado');
-    
-    // Chart data calculation
-    const allPeriods = Array.from(new Set(movimientos.map(m => m.periodo || m.fecha.substring(0, 7)))).sort();
+    const inView = movimientos.filter(m => matchesView(m, selectedView, spaces));
+    const realInView = inView.filter(isReal);
+
+    const filteredByPeriod = realInView.filter(
+      m => (m.periodo || m.fecha.substring(0, 7)) === selectedPeriod && m.estado === 'Pagado'
+    );
+
+    const allPeriods = Array.from(new Set(realInView.map(m => m.periodo || m.fecha.substring(0, 7)))).sort();
     const chart = allPeriods.map(p => {
-      const perMovs = movimientos.filter(m => (m.periodo || m.fecha.substring(0, 7)) === p && m.estado === 'Pagado');
+      const perMovs = realInView.filter(m => (m.periodo || m.fecha.substring(0, 7)) === p && m.estado === 'Pagado');
       const inc = perMovs.filter(m => m.tipo_movimiento === 'Ingreso').reduce((acc, m) => acc + m.monto, 0);
       const exp = perMovs.filter(m => m.tipo_movimiento === 'Gasto').reduce((acc, m) => acc + m.monto, 0);
       return { name: p, ingresos: inc, gastos: exp, utilidad: inc - exp };
     });
 
+    // MRR solo aplica a vista business o global
+    const mrrApplies = selectedView === 'global' || selectedView === 'business' || spaces.find(s => s.id === selectedView)?.type === 'business';
+    const mrr = mrrApplies
+      ? clientesMRR.filter(c => c.estado === 'Activo').reduce((acc, current) => acc + current.valor_mensual, 0)
+      : 0;
+
     return {
-      totalIncome: movimientos.filter(m => m.tipo_movimiento === 'Ingreso' && m.estado === 'Pagado').reduce((acc, current) => acc + current.monto, 0),
-      totalExpenses: movimientos.filter(m => m.tipo_movimiento === 'Gasto' && m.estado === 'Pagado').reduce((acc, current) => acc + current.monto, 0),
-      mrr: clientesMRR.filter(c => c.estado === 'Activo').reduce((acc, current) => acc + current.valor_mensual, 0),
+      totalIncome: realInView.filter(m => m.tipo_movimiento === 'Ingreso' && m.estado === 'Pagado').reduce((acc, m) => acc + m.monto, 0),
+      totalExpenses: realInView.filter(m => m.tipo_movimiento === 'Gasto' && m.estado === 'Pagado').reduce((acc, m) => acc + m.monto, 0),
+      mrr,
       totalDebt: deudas.reduce((acc, current) => acc + current.saldo_restante, 0),
       chartData: chart,
       periodIncome: filteredByPeriod.filter(m => m.tipo_movimiento === 'Ingreso').reduce((acc, m) => acc + m.monto, 0),
       periodExpenses: filteredByPeriod.filter(m => m.tipo_movimiento === 'Gasto').reduce((acc, m) => acc + m.monto, 0),
     };
-  }, [movimientos, clientesMRR, deudas, selectedPeriod]);
+  }, [movimientos, clientesMRR, deudas, selectedPeriod, selectedView, spaces]);
 
-  const value = {
+  const filteredMovimientos = useMemo(() => {
+    return movimientos.filter(
+      m => matchesView(m, selectedView, spaces) && (m.periodo || m.fecha.substring(0, 7)) === selectedPeriod
+    );
+  }, [movimientos, selectedView, selectedPeriod, spaces]);
+
+  const value: FinanceContextType = {
     movimientos,
-    filteredMovimientos: movimientos.filter(m => (m.periodo || m.fecha.substring(0, 7)) === selectedPeriod),
+    filteredMovimientos,
     clientesMRR,
     proyectos,
     deudas,
     presupuestos,
+    spaces,
+    selectedView,
+    setSelectedView,
     selectedPeriod,
     setSelectedPeriod,
     periods,
     syncAllToGoogleSheets,
     importAllFromGoogleSheets,
     addMovimiento,
+    addTransferencia,
+    removeTransferencia,
     addProyecto,
     registrarPagoProyecto,
     updateDebt,
     undoDebtPayment,
-    stats
+    balancesBySpace,
+    globalBalance,
+    stats,
   };
 
   return <FinanceContext.Provider value={value}>{children}</FinanceContext.Provider>;

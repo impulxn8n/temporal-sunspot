@@ -1,7 +1,21 @@
 export type Unidad = 'SM DIGITALS' | 'Marca Personal' | 'Personal';
-export type TipoMovimiento = 'Ingreso' | 'Gasto' | 'Inversión';
+export type TipoMovimiento = 'Ingreso' | 'Gasto' | 'Inversión' | 'Transferencia';
 export type EstadoMovimiento = 'Pagado' | 'Pendiente' | 'Parcial';
 export type Impacto = 'Core' | 'Privado' | 'Extraordinario';
+
+export type SpaceType = 'personal' | 'business';
+
+export interface Space {
+  id: string;
+  name: string;
+  type: SpaceType;
+  color: string;
+  icon: string;
+  archived?: boolean;
+  created_at: string;
+}
+
+export type SpaceView = 'global' | 'personal' | 'business' | string;
 
 export interface Movimiento {
   id: string;
@@ -10,6 +24,7 @@ export interface Movimiento {
   año: number;
   mes: number;
   unidad: Unidad;
+  space_id: string;
   tipo_movimiento: TipoMovimiento;
   categoria: string;
   subcategoria: string;
@@ -23,6 +38,12 @@ export interface Movimiento {
   proyecto_id?: string;
   cuenta: string;
   created_at: string;
+  // Solo cuando tipo_movimiento === 'Transferencia':
+  // Cada transferencia genera 2 movimientos pareados (in + out) con el mismo transfer_pair_id.
+  // No se cuentan como ingreso/gasto en stats; sí afectan balance por espacio.
+  transfer_pair_id?: string;
+  transfer_direction?: 'in' | 'out';
+  transfer_counterpart_space_id?: string;
 }
 
 export interface ClienteMRR {
