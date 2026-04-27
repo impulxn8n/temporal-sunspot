@@ -1,11 +1,147 @@
 import type { Movimiento, ClienteMRR, Proyecto, Deuda, Presupuesto } from '../types';
 
-// App arranca limpia desde abril 2026.
-// Los movimientos, deudas, proyectos y presupuestos se cargan manualmente.
-export const mockMovimientos: Movimiento[] = [];
+// App arranca desde abril 2026.
 export const mockProyectos: Proyecto[] = [];
-export const mockDeudas: Deuda[] = [];
 export const mockPresupuestos: Presupuesto[] = [];
+
+// Gastos fijos recurrentes de abril 2026.
+// Marcados como recurrente=true para que la proyección los detecte como plantillas mensuales.
+export const mockMovimientos: Movimiento[] = [
+  {
+    id: 'gf_oficina_abr',
+    fecha: '2026-04-01',
+    periodo: '2026-04',
+    año: 2026,
+    mes: 4,
+    unidad: 'SM DIGITALS',
+    space_id: 'sp_smdigitals',
+    tipo_movimiento: 'Gasto',
+    categoria: 'Operativos',
+    subcategoria: 'Oficina',
+    cliente_proveedor: 'Arrendador',
+    descripcion: 'Alquiler oficina',
+    metodo_pago: 'Transferencia',
+    monto: 750_000,
+    recurrente: true,
+    estado: 'Pagado',
+    impacto: 'Core',
+    cuenta: 'Bancolombia',
+    created_at: '2026-04-01T08:00:00Z',
+  },
+  {
+    id: 'gf_internet_abr',
+    fecha: '2026-04-01',
+    periodo: '2026-04',
+    año: 2026,
+    mes: 4,
+    unidad: 'SM DIGITALS',
+    space_id: 'sp_smdigitals',
+    tipo_movimiento: 'Gasto',
+    categoria: 'Operativos',
+    subcategoria: 'Internet/Celular',
+    cliente_proveedor: 'Movistar',
+    descripcion: 'Internet y celular',
+    metodo_pago: 'Transferencia',
+    monto: 75_000,
+    recurrente: true,
+    estado: 'Pagado',
+    impacto: 'Core',
+    cuenta: 'Bancolombia',
+    created_at: '2026-04-01T08:00:00Z',
+  },
+  {
+    id: 'gf_servicios_abr',
+    fecha: '2026-04-01',
+    periodo: '2026-04',
+    año: 2026,
+    mes: 4,
+    unidad: 'SM DIGITALS',
+    space_id: 'sp_smdigitals',
+    tipo_movimiento: 'Gasto',
+    categoria: 'Operativos',
+    subcategoria: 'Servicios públicos',
+    cliente_proveedor: 'EPM',
+    descripcion: 'Servicios públicos',
+    metodo_pago: 'Transferencia',
+    monto: 150_000,
+    recurrente: true,
+    estado: 'Pagado',
+    impacto: 'Core',
+    cuenta: 'Bancolombia',
+    created_at: '2026-04-01T08:00:00Z',
+  },
+  {
+    id: 'gf_barberia_abr',
+    fecha: '2026-04-20',
+    periodo: '2026-04',
+    año: 2026,
+    mes: 4,
+    unidad: 'Personal',
+    space_id: 'sp_personal',
+    tipo_movimiento: 'Gasto',
+    categoria: 'Bienestar',
+    subcategoria: 'Barbería',
+    cliente_proveedor: 'Barbería',
+    descripcion: 'Corte mensual',
+    metodo_pago: 'Efectivo',
+    monto: 100_000,
+    recurrente: true,
+    estado: 'Pagado',
+    impacto: 'Privado',
+    cuenta: 'Billetera',
+    created_at: '2026-04-20T08:00:00Z',
+  },
+];
+
+// Deudas activas con sus cuotas mensuales.
+// fecha_pago = día del mes en que se debe pagar la cuota (puedes editarlo en la app).
+// El préstamo de $4.100.000 viene sin cuota — ajustar cuando definas el plan.
+export const mockDeudas: Deuda[] = [
+  {
+    id: 'deuda_victor',
+    acreedor: 'Víctor',
+    tipo: 'Préstamo personal',
+    saldo_inicial: 15_660_000,
+    cuota_mensual: 500_000,
+    pagado: 0,
+    saldo_restante: 15_660_000,
+    fecha_pago: '15',
+    estado: 'Al día',
+  },
+  {
+    id: 'deuda_credito_grande',
+    acreedor: 'Banco - Crédito grande',
+    tipo: 'Crédito bancario',
+    saldo_inicial: 28_786_385,
+    cuota_mensual: 785_000,
+    pagado: 0,
+    saldo_restante: 28_786_385,
+    fecha_pago: '30',
+    estado: 'Al día',
+  },
+  {
+    id: 'deuda_tarjeta',
+    acreedor: 'Tarjeta de crédito',
+    tipo: 'Tarjeta',
+    saldo_inicial: 3_000_000,
+    cuota_mensual: 1_137_000,
+    pagado: 0,
+    saldo_restante: 3_000_000,
+    fecha_pago: '10',
+    estado: 'Al día',
+  },
+  {
+    id: 'deuda_prestamo',
+    acreedor: 'Préstamo',
+    tipo: 'Préstamo',
+    saldo_inicial: 4_100_000,
+    cuota_mensual: 0,
+    pagado: 0,
+    saldo_restante: 4_100_000,
+    fecha_pago: '25',
+    estado: 'Al día',
+  },
+];
 
 // 6 clientes recurrentes activos con sus reglas de distribución.
 // margen_30 (default): costo operativo 150k + 30% del margen.
