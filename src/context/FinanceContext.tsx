@@ -186,17 +186,40 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const updateDebt = useCallback((debtId: string, paymentAmount: number) => {
     setDeudas(prev => {
-      const updated = prev.map(d => {
-        if (d.id === debtId) {
-          const newPagado = d.pagado + paymentAmount;
-          return { ...d, pagado: newPagado, saldo_restante: d.saldo_inicial - newPagado };
-        }
-        return d;
-      });
+      const debt = prev.find(d => d.id === debtId);
+      if (!debt) return prev;
+
+      const newPagado = debt.pagado + paymentAmount;
+      const updatedDebt = { 
+        ...debt, 
+        pagado: newPagado, 
+        saldo_restante: debt.saldo_inicial - newPagado,
+        estado: (debt.saldo_inicial - newPagado <= 0) ? 'Liquidado' as const : 'Al día' as const
+      };
+
+      const updated = prev.map(d => d.id === debtId ? updatedDebt : d);
       saveData({ deudas: updated });
+
+      // Registrar movimiento de gasto
+      addMovimiento({
+        fecha: new Date().toISOString().split('T')[0],
+        unidad: 'Personal',
+        tipo_movimiento: 'Gasto',
+        categoria: 'Deuda',
+        subcategoria: debt.tipo,
+        cliente_proveedor: debt.acreedor,
+        descripcion: `Pago cuota: ${debt.acreedor}`,
+        metodo_pago: 'Transferencia',
+        monto: paymentAmount,
+        recurrente: false,
+        estado: 'Pagado',
+        impacto: 'Privado',
+        cuenta: 'Bancolombia'
+      });
+
       return updated;
     });
-  }, []);
+  }, [addMovimiento]);
 
   const undoDebtPayment = useCallback((debtId: string, paymentAmount: number) => {
     setDeudas(prev => {
@@ -336,7 +359,6 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const unidad = row[3] as Movimiento['unidad'];
       const space_id =
         unidad === 'SM DIGITALS' ? 'sp_smdigitals'
-        : unidad === 'Marca Personal' ? 'sp_marca_personal'
         : 'sp_personal';
       const date = new Date(row[1] || new Date());
       return {

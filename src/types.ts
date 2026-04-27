@@ -1,4 +1,4 @@
-export type Unidad = 'SM DIGITALS' | 'Marca Personal' | 'Personal';
+export type Unidad = 'SM DIGITALS' | 'Personal';
 export type TipoMovimiento = 'Ingreso' | 'Gasto' | 'Inversión' | 'Transferencia';
 export type EstadoMovimiento = 'Pagado' | 'Pendiente' | 'Parcial';
 export type Impacto = 'Core' | 'Privado' | 'Extraordinario';
