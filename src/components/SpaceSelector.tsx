@@ -12,11 +12,7 @@ const ICONS: Record<string, React.ComponentType<{ size?: number; className?: str
 export const SpaceSelector: React.FC = () => {
   const { spaces, selectedView, setSelectedView } = useFinance();
 
-  const baseViews: { id: SpaceView; label: string; Icon: React.ComponentType<{ size?: number; className?: string }> }[] = [
-    { id: 'global', label: 'Global', Icon: Globe },
-    { id: 'personal', label: 'Personal', Icon: User },
-    { id: 'business', label: 'Negocio', Icon: Briefcase },
-  ];
+  const baseViews: { id: SpaceView; label: string; Icon: React.ComponentType<{ size?: number; className?: string }> }[] = [];
 
   return (
     <div className="flex flex-wrap gap-2">

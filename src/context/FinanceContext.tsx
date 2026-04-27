@@ -185,6 +185,8 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   }, []);
 
   const updateDebt = useCallback((debtId: string, paymentAmount: number) => {
+    let debtToUpdate: any = null;
+
     setDeudas(prev => {
       const debt = prev.find(d => d.id === debtId);
       if (!debt) return prev;
@@ -196,29 +198,33 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         saldo_restante: debt.saldo_inicial - newPagado,
         estado: (debt.saldo_inicial - newPagado <= 0) ? 'Liquidado' as const : 'Al día' as const
       };
+      debtToUpdate = updatedDebt;
 
       const updated = prev.map(d => d.id === debtId ? updatedDebt : d);
       saveData({ deudas: updated });
-
-      // Registrar movimiento de gasto
-      addMovimiento({
-        fecha: new Date().toISOString().split('T')[0],
-        unidad: 'Personal',
-        tipo_movimiento: 'Gasto',
-        categoria: 'Deuda',
-        subcategoria: debt.tipo,
-        cliente_proveedor: debt.acreedor,
-        descripcion: `Pago cuota: ${debt.acreedor}`,
-        metodo_pago: 'Transferencia',
-        monto: paymentAmount,
-        recurrente: false,
-        estado: 'Pagado',
-        impacto: 'Privado',
-        cuenta: 'Bancolombia'
-      });
-
       return updated;
     });
+
+    // Registrar movimiento de gasto fuera del setter de estado
+    if (paymentAmount > 0) {
+      setTimeout(() => {
+        addMovimiento({
+          fecha: new Date().toISOString().split('T')[0],
+          unidad: 'Personal',
+          tipo_movimiento: 'Gasto',
+          categoria: 'Deuda',
+          subcategoria: debtToUpdate?.tipo || 'Pago',
+          cliente_proveedor: debtToUpdate?.acreedor || 'Acreedor',
+          descripcion: `Pago cuota: ${debtToUpdate?.acreedor || ''}`,
+          metodo_pago: 'Transferencia',
+          monto: paymentAmount,
+          recurrente: false,
+          estado: 'Pagado',
+          impacto: 'Privado',
+          cuenta: 'Bancolombia'
+        });
+      }, 0);
+    }
   }, [addMovimiento]);
 
   const undoDebtPayment = useCallback((debtId: string, paymentAmount: number) => {

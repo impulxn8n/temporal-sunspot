@@ -82,7 +82,6 @@ export const POSForm: React.FC = () => {
                 onChange={e => setFormData({ ...formData, unidad: e.target.value as Unidad })}
               >
                 <option value="SM DIGITALS">SM DIGITALS</option>
-                <option value="Marca Personal">Marca Personal</option>
                 <option value="Personal">Personal</option>
               </select>
             </div>
