@@ -45,7 +45,7 @@ interface FinanceContextType {
   addClienteMRR: (cliente: Omit<ClienteMRR, 'id'>) => ClienteMRR;
   updateClienteMRR: (id: string, updates: Partial<Omit<ClienteMRR, 'id'>>) => void;
   removeClienteMRR: (id: string) => void;
-  registerMRRPayment: (clienteId: string) => void;
+  registerMRRPayment: (clienteId: string, shouldDistribute?: boolean) => void;
   addProyecto: (proyecto: Omit<Proyecto, 'id'>, syncCalendar?: boolean) => void;
   registrarPagoProyecto: (projectId: string, amount: number, method: string) => void;
   updateDebt: (debtId: string, paymentAmount: number) => void;
@@ -221,12 +221,11 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     });
   }, []);
 
-  const registerMRRPayment = useCallback((clienteId: string) => {
+  const registerMRRPayment = useCallback((clienteId: string, shouldDistribute: boolean = true) => {
     setClientesMRR(prev => {
       const cliente = prev.find(c => c.id === clienteId);
       if (!cliente) return prev;
 
-      const distribucion = calcularDistribucionCliente(cliente);
       const today = new Date().toISOString().split('T')[0];
 
       // Crear ingreso principal a SM DIGITALS
@@ -246,33 +245,37 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         cuenta: cliente.metodo_pago === 'Transferencia' ? 'Bancolombia' : 'Billetera',
       });
 
-      // Transferencias a bolsillos si hay distribución
-      if (distribucion.costoOperativo > 0) {
-        setTimeout(() => {
-          addTransferencia({
-            fromSpaceId: SPACE_IDS.BUSINESS,
-            toSpaceId: SPACE_IDS.BOLS_OPERATIVO,
-            monto: distribucion.costoOperativo,
-            fecha: today,
-            descripcion: `Reserva: ${cliente.cliente}`,
-            metodoPago: 'Interna',
-            cuenta: 'Interna',
-          });
-        }, 50);
-      }
+      // Transferencias a bolsillos solo si shouldDistribute es true
+      if (shouldDistribute) {
+        const distribucion = calcularDistribucionCliente(cliente);
 
-      if (distribucion.ahorro > 0) {
-        setTimeout(() => {
-          addTransferencia({
-            fromSpaceId: SPACE_IDS.BUSINESS,
-            toSpaceId: SPACE_IDS.BOLS_EMERGENCIA,
-            monto: distribucion.ahorro,
-            fecha: today,
-            descripcion: `Emergencia: ${cliente.cliente}`,
-            metodoPago: 'Interna',
-            cuenta: 'Interna',
-          });
-        }, 100);
+        if (distribucion.costoOperativo > 0) {
+          setTimeout(() => {
+            addTransferencia({
+              fromSpaceId: SPACE_IDS.BUSINESS,
+              toSpaceId: SPACE_IDS.BOLS_OPERATIVO,
+              monto: distribucion.costoOperativo,
+              fecha: today,
+              descripcion: `Costos: ${cliente.cliente}`,
+              metodoPago: 'Interna',
+              cuenta: 'Interna',
+            });
+          }, 50);
+        }
+
+        if (distribucion.ahorro > 0) {
+          setTimeout(() => {
+            addTransferencia({
+              fromSpaceId: SPACE_IDS.BUSINESS,
+              toSpaceId: SPACE_IDS.BOLS_EMERGENCIA,
+              monto: distribucion.ahorro,
+              fecha: today,
+              descripcion: `Emergencia: ${cliente.cliente}`,
+              metodoPago: 'Interna',
+              cuenta: 'Interna',
+            });
+          }, 100);
+        }
       }
 
       return prev;

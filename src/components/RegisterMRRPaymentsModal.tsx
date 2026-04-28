@@ -10,6 +10,7 @@ interface RegisterMRRPaymentsModalProps {
 export const RegisterMRRPaymentsModal: React.FC<RegisterMRRPaymentsModalProps> = ({ open, onClose }) => {
   const { clientesMRR, registerMRRPayment } = useFinance();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [shouldDistribute, setShouldDistribute] = useState(true);
 
   const activos = useMemo(() => clientesMRR.filter(c => c.estado === 'Activo'), [clientesMRR]);
 
@@ -33,7 +34,7 @@ export const RegisterMRRPaymentsModal: React.FC<RegisterMRRPaymentsModalProps> =
   };
 
   const handleRegisterAll = () => {
-    selectedIds.forEach(id => registerMRRPayment(id));
+    selectedIds.forEach(id => registerMRRPayment(id, shouldDistribute));
     setSelectedIds(new Set());
     onClose();
   };
@@ -128,6 +129,21 @@ export const RegisterMRRPaymentsModal: React.FC<RegisterMRRPaymentsModalProps> =
                 </p>
               </div>
             )}
+
+            {/* Toggle Distribuir */}
+            <div className="bg-slate-800/40 border border-white/5 rounded-2xl p-4 mb-4">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={shouldDistribute}
+                  onChange={e => setShouldDistribute(e.target.checked)}
+                  className="w-4 h-4 rounded border border-white/20 bg-white/5 accent-brand-primary"
+                />
+                <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">
+                  Distribuir en bolsillos (150k costos + 30% emergencia)
+                </span>
+              </label>
+            </div>
 
             {/* Botones */}
             <div className="flex gap-3">
