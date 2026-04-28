@@ -1,16 +1,18 @@
 import React from 'react';
 import { useFinance } from '../hooks/useFinance';
-import { Banknote, Calendar, Bell, RefreshCw, Plus, Wallet, Shield, TrendingUp } from 'lucide-react';
+import { Banknote, Calendar, Bell, RefreshCw, Plus, Wallet, Shield, TrendingUp, Check } from 'lucide-react';
 import type { ClienteMRR } from '../types';
 import { useGoogleAuth } from '../hooks/useGoogleAuth';
 import { getOrCreateFinanceCalendar, createPaymentEvent } from '../lib/googleCalendar';
 import { useState } from 'react';
 import { AddClienteMRRModal } from './AddClienteMRRModal';
+import { RegisterMRRPaymentsModal } from './RegisterMRRPaymentsModal';
 import { calcularDistribucionCliente, calcularDistribucionMensualMRR } from '../lib/clienteCalc';
 
 export const ClientesMRR: React.FC = () => {
-  const { clientesMRR } = useFinance();
+  const { clientesMRR, registerMRRPayment } = useFinance();
   const [showAdd, setShowAdd] = useState(false);
+  const [showRegisterPayments, setShowRegisterPayments] = useState(false);
 
   const totalMRR = clientesMRR.filter(c => c.estado === 'Activo').reduce((acc, c) => acc + c.valor_mensual, 0);
   const totalPausado = clientesMRR.filter(c => c.estado === 'Pausado').reduce((acc, c) => acc + c.valor_mensual, 0);
@@ -95,8 +97,16 @@ export const ClientesMRR: React.FC = () => {
           <p className="text-brand-primary font-bold uppercase tracking-[0.2em] text-[8px] lg:text-[10px] mt-1">Gestión de suscripciones SM DIGITALS</p>
         </div>
         <div className="flex gap-3 flex-wrap lg:justify-end items-center">
+          <button
+            onClick={() => setShowRegisterPayments(true)}
+            className="bg-brand-secondary/5 border border-brand-secondary/20 px-4 lg:px-6 py-3 lg:py-4 rounded-xl lg:rounded-2xl text-brand-secondary font-black text-[9px] lg:text-[10px] uppercase tracking-widest hover:bg-brand-secondary hover:text-black transition-all flex items-center gap-2 lg:gap-3 shadow-lg shadow-brand-secondary/5"
+          >
+            <Check size={14} />
+            <span className="hidden sm:inline">Registrar Cobros</span>
+            <span className="sm:hidden">Registrar</span>
+          </button>
           {isConnected && (
-            <button 
+            <button
               onClick={handleSyncAll}
               disabled={syncingId !== null}
               className="bg-emerald-500/5 border border-emerald-500/20 px-4 lg:px-6 py-3 lg:py-4 rounded-xl lg:rounded-2xl text-emerald-400 font-black text-[9px] lg:text-[10px] uppercase tracking-widest hover:bg-emerald-500 hover:text-black transition-all flex items-center gap-2 lg:gap-3 disabled:opacity-50 shadow-lg shadow-emerald-500/5"
@@ -221,35 +231,42 @@ export const ClientesMRR: React.FC = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 mt-6">
+            <div className="grid grid-cols-3 gap-3 mt-6">
+              {cliente.estado === 'Activo' && (
+                <button
+                  onClick={() => registerMRRPayment(cliente.id)}
+                  className="py-3 lg:py-4 bg-brand-secondary/5 border border-brand-secondary/20 hover:bg-brand-secondary hover:text-black text-brand-secondary text-[8px] lg:text-[9px] font-black rounded-xl lg:rounded-2xl transition-all uppercase tracking-widest flex items-center justify-center gap-1 shadow-xl shadow-brand-secondary/5"
+                >
+                  <Check size={11} />
+                  <span className="hidden sm:inline">Cobrado</span>
+                </button>
+              )}
               <button className="py-3 lg:py-4 bg-white/5 border border-white/5 hover:border-white/20 hover:bg-white/10 text-slate-400 hover:text-white text-[8px] lg:text-[9px] font-black rounded-xl lg:rounded-2xl transition-all uppercase tracking-widest shadow-xl">
                 Auditar
               </button>
-              {cliente.estado === 'Activo' && (
-                isConnected ? (
-                  <button 
-                    onClick={() => handleSyncToCalendar(cliente)}
-                    disabled={syncingId === cliente.id}
-                    className="py-3 lg:py-4 bg-brand-income/5 border border-brand-income/20 hover:bg-brand-income hover:text-black text-brand-income text-[8px] lg:text-[9px] font-black rounded-xl lg:rounded-2xl transition-all uppercase tracking-widest flex items-center justify-center gap-2 group/btn shadow-xl shadow-brand-income/5 disabled:opacity-50"
-                  >
-                    {syncingId === cliente.id ? (
-                      <RefreshCw size={12} className="animate-spin" />
-                    ) : (
-                      <Bell size={12} className="group-hover/btn:animate-bounce" />
-                    )}
-                    <span className="truncate">{syncingId === cliente.id ? '...' : 'Sync'}</span>
-                  </button>
-                ) : (
-                  <a 
-                    href={getGoogleCalendarUrl(cliente)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="py-3 lg:py-4 bg-brand-gold/5 border border-brand-gold/20 hover:bg-brand-gold hover:text-black text-brand-gold text-[8px] lg:text-[9px] font-black rounded-xl lg:rounded-2xl transition-all uppercase tracking-widest flex items-center justify-center gap-2 group/btn shadow-xl shadow-brand-gold/5"
-                  >
+              {isConnected ? (
+                <button
+                  onClick={() => handleSyncToCalendar(cliente)}
+                  disabled={syncingId === cliente.id}
+                  className="py-3 lg:py-4 bg-brand-income/5 border border-brand-income/20 hover:bg-brand-income hover:text-black text-brand-income text-[8px] lg:text-[9px] font-black rounded-xl lg:rounded-2xl transition-all uppercase tracking-widest flex items-center justify-center gap-2 group/btn shadow-xl shadow-brand-income/5 disabled:opacity-50"
+                >
+                  {syncingId === cliente.id ? (
+                    <RefreshCw size={12} className="animate-spin" />
+                  ) : (
                     <Bell size={12} className="group-hover/btn:animate-bounce" />
-                    <span>Calendar</span>
-                  </a>
-                )
+                  )}
+                  <span className="hidden sm:inline">{syncingId === cliente.id ? '...' : 'Sync'}</span>
+                </button>
+              ) : (
+                <a
+                  href={getGoogleCalendarUrl(cliente)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="py-3 lg:py-4 bg-brand-gold/5 border border-brand-gold/20 hover:bg-brand-gold hover:text-black text-brand-gold text-[8px] lg:text-[9px] font-black rounded-xl lg:rounded-2xl transition-all uppercase tracking-widest flex items-center justify-center gap-2 group/btn shadow-xl shadow-brand-gold/5"
+                >
+                  <Bell size={12} className="group-hover/btn:animate-bounce" />
+                  <span className="hidden sm:inline">Calendar</span>
+                </a>
               )}
             </div>
           </div>
@@ -258,6 +275,7 @@ export const ClientesMRR: React.FC = () => {
       </div>
 
       <AddClienteMRRModal open={showAdd} onClose={() => setShowAdd(false)} />
+      <RegisterMRRPaymentsModal open={showRegisterPayments} onClose={() => setShowRegisterPayments(false)} />
     </div>
   );
 };

@@ -1,8 +1,9 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useMemo } from 'react';
 import type { Movimiento, ClienteMRR, Proyecto, Deuda, Presupuesto, Space, SpaceView, CuentaPorCobrar } from '../types';
 import { loadData, saveData } from '../lib/storage';
-import { spaceIdToUnidad, unidadToSpaceId } from '../lib/spaces';
+import { spaceIdToUnidad, unidadToSpaceId, SPACE_IDS } from '../lib/spaces';
 import { createFinanceSpreadsheet, updateSheetValues, getSpreadsheetIdByName, getSheetValues } from '../lib/googleSheets';
+import { calcularDistribucionCliente } from '../lib/clienteCalc';
 
 export interface SpaceBalance {
   spaceId: string;
@@ -44,6 +45,7 @@ interface FinanceContextType {
   addClienteMRR: (cliente: Omit<ClienteMRR, 'id'>) => ClienteMRR;
   updateClienteMRR: (id: string, updates: Partial<Omit<ClienteMRR, 'id'>>) => void;
   removeClienteMRR: (id: string) => void;
+  registerMRRPayment: (clienteId: string) => void;
   addProyecto: (proyecto: Omit<Proyecto, 'id'>, syncCalendar?: boolean) => void;
   registrarPagoProyecto: (projectId: string, amount: number, method: string) => void;
   updateDebt: (debtId: string, paymentAmount: number) => void;
@@ -218,6 +220,64 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       return updated;
     });
   }, []);
+
+  const registerMRRPayment = useCallback((clienteId: string) => {
+    setClientesMRR(prev => {
+      const cliente = prev.find(c => c.id === clienteId);
+      if (!cliente) return prev;
+
+      const distribucion = calcularDistribucionCliente(cliente);
+      const today = new Date().toISOString().split('T')[0];
+
+      // Crear ingreso principal a SM DIGITALS
+      addMovimiento({
+        fecha: today,
+        unidad: 'SM DIGITALS',
+        tipo_movimiento: 'Ingreso',
+        categoria: 'MRR',
+        subcategoria: cliente.servicio,
+        cliente_proveedor: cliente.cliente,
+        descripcion: `Cobro: ${cliente.cliente} - ${cliente.servicio}`,
+        metodo_pago: cliente.metodo_pago,
+        monto: cliente.valor_mensual,
+        recurrente: false,
+        estado: 'Pagado',
+        impacto: 'Core',
+        cuenta: cliente.metodo_pago === 'Transferencia' ? 'Bancolombia' : 'Billetera',
+      });
+
+      // Transferencias a bolsillos si hay distribución
+      if (distribucion.costoOperativo > 0) {
+        setTimeout(() => {
+          addTransferencia({
+            fromSpaceId: SPACE_IDS.BUSINESS,
+            toSpaceId: SPACE_IDS.BOLS_OPERATIVO,
+            monto: distribucion.costoOperativo,
+            fecha: today,
+            descripcion: `Reserva: ${cliente.cliente}`,
+            metodoPago: 'Interna',
+            cuenta: 'Interna',
+          });
+        }, 50);
+      }
+
+      if (distribucion.ahorro > 0) {
+        setTimeout(() => {
+          addTransferencia({
+            fromSpaceId: SPACE_IDS.BUSINESS,
+            toSpaceId: SPACE_IDS.BOLS_EMERGENCIA,
+            monto: distribucion.ahorro,
+            fecha: today,
+            descripcion: `Emergencia: ${cliente.cliente}`,
+            metodoPago: 'Interna',
+            cuenta: 'Interna',
+          });
+        }, 100);
+      }
+
+      return prev;
+    });
+  }, [addMovimiento, addTransferencia]);
 
   const addCuentaPorCobrar = useCallback((cuenta: Omit<CuentaPorCobrar, 'id' | 'created_at'>) => {
     const id = crypto.randomUUID();
@@ -601,6 +661,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     addClienteMRR,
     updateClienteMRR,
     removeClienteMRR,
+    registerMRRPayment,
     addProyecto,
     registrarPagoProyecto,
     updateDebt,
