@@ -10,7 +10,7 @@ interface RegisterMRRPaymentsModalProps {
 export const RegisterMRRPaymentsModal: React.FC<RegisterMRRPaymentsModalProps> = ({ open, onClose }) => {
   const { clientesMRR, registerMRRPayment } = useFinance();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [shouldDistribute, setShouldDistribute] = useState(true);
+  const [shouldDistribute, setShouldDistribute] = useState(false);
 
   const activos = useMemo(() => clientesMRR.filter(c => c.estado === 'Activo'), [clientesMRR]);
 
