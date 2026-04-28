@@ -1,5 +1,5 @@
-import type { Movimiento, ClienteMRR, Proyecto, Deuda, Presupuesto, Space } from '../types';
-import { mockMovimientos, mockClientesMRR, mockProyectos, mockDeudas, mockPresupuestos } from './mockData';
+import type { Movimiento, ClienteMRR, Proyecto, Deuda, Presupuesto, Space, CuentaPorCobrar } from '../types';
+import { mockMovimientos, mockClientesMRR, mockProyectos, mockDeudas, mockPresupuestos, mockCuentasPorCobrar } from './mockData';
 import { defaultSpaces, migrateMovimientoSpace } from './spaces';
 
 const KEYS = {
@@ -9,6 +9,7 @@ const KEYS = {
   DEUDAS: 'finance_v21_deudas',
   PRESUPUESTOS: 'finance_v21_presupuestos',
   SPACES: 'finance_v21_spaces',
+  CUENTAS_POR_COBRAR: 'finance_v21_cuentas_por_cobrar',
 };
 
 export const loadData = () => {
@@ -20,8 +21,9 @@ export const loadData = () => {
   const deudas = JSON.parse(localStorage.getItem(KEYS.DEUDAS) || JSON.stringify(mockDeudas));
   const presupuestos = JSON.parse(localStorage.getItem(KEYS.PRESUPUESTOS) || JSON.stringify(mockPresupuestos));
   const spaces: Space[] = JSON.parse(localStorage.getItem(KEYS.SPACES) || JSON.stringify(defaultSpaces));
+  const cuentasPorCobrar: CuentaPorCobrar[] = JSON.parse(localStorage.getItem(KEYS.CUENTAS_POR_COBRAR) || JSON.stringify(mockCuentasPorCobrar));
 
-  return { movimientos, clientesMRR, proyectos, deudas, presupuestos, spaces };
+  return { movimientos, clientesMRR, proyectos, deudas, presupuestos, spaces, cuentasPorCobrar };
 };
 
 export const saveData = (data: {
@@ -31,6 +33,7 @@ export const saveData = (data: {
   deudas?: Deuda[];
   presupuestos?: Presupuesto[];
   spaces?: Space[];
+  cuentasPorCobrar?: CuentaPorCobrar[];
 }) => {
   if (data.movimientos) localStorage.setItem(KEYS.MOVIMIENTOS, JSON.stringify(data.movimientos));
   if (data.clientesMRR) localStorage.setItem(KEYS.CLIENTES_MRR, JSON.stringify(data.clientesMRR));
@@ -38,4 +41,5 @@ export const saveData = (data: {
   if (data.deudas) localStorage.setItem(KEYS.DEUDAS, JSON.stringify(data.deudas));
   if (data.presupuestos) localStorage.setItem(KEYS.PRESUPUESTOS, JSON.stringify(data.presupuestos));
   if (data.spaces) localStorage.setItem(KEYS.SPACES, JSON.stringify(data.spaces));
+  if (data.cuentasPorCobrar) localStorage.setItem(KEYS.CUENTAS_POR_COBRAR, JSON.stringify(data.cuentasPorCobrar));
 };

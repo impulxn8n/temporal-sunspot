@@ -104,3 +104,15 @@ export interface Presupuesto {
   real: number;
   diferencia: number;
 }
+
+export interface CuentaPorCobrar {
+  id: string;
+  cliente: string;
+  monto: number;
+  fecha_emision: string;
+  fecha_vencimiento?: string;
+  descripcion?: string;
+  estado: 'Pendiente' | 'Parcial' | 'Cobrado';
+  monto_cobrado: number;
+  created_at: string;
+}

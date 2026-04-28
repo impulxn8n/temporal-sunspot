@@ -9,6 +9,7 @@ import { PeriodSelector } from './PeriodSelector';
 import { SpaceSelector } from './SpaceSelector';
 import { BalanceCards } from './BalanceCards';
 import { CashFlowProjection } from './CashFlowProjection';
+import { CuentasPorCobrar } from './CuentasPorCobrar';
 
 export const Dashboard: React.FC = () => {
   const { stats } = useFinance();
@@ -146,6 +147,11 @@ export const Dashboard: React.FC = () => {
             <p className="text-slate-600 text-[8px] lg:text-[10px] font-black italic uppercase tracking-[0.2em]">Automated vía n8n & Evolution API</p>
           </div>
         </div>
+      </div>
+
+      {/* Cuentas por Cobrar */}
+      <div className="glass-card p-6 lg:p-10 rounded-[40px] shadow-2xl">
+        <CuentasPorCobrar />
       </div>
 
       {/* Cash Flow Projection */}

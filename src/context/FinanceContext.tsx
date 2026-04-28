@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useMemo } from 'react';
-import type { Movimiento, ClienteMRR, Proyecto, Deuda, Presupuesto, Space, SpaceView } from '../types';
+import type { Movimiento, ClienteMRR, Proyecto, Deuda, Presupuesto, Space, SpaceView, CuentaPorCobrar } from '../types';
 import { loadData, saveData } from '../lib/storage';
 import { spaceIdToUnidad, unidadToSpaceId } from '../lib/spaces';
 import { createFinanceSpreadsheet, updateSheetValues, getSpreadsheetIdByName, getSheetValues } from '../lib/googleSheets';
@@ -22,6 +22,7 @@ interface FinanceContextType {
   deudas: Deuda[];
   presupuestos: Presupuesto[];
   spaces: Space[];
+  cuentasPorCobrar: CuentaPorCobrar[];
   selectedView: SpaceView;
   setSelectedView: (view: SpaceView) => void;
   selectedPeriod: string;
@@ -47,6 +48,9 @@ interface FinanceContextType {
   registrarPagoProyecto: (projectId: string, amount: number, method: string) => void;
   updateDebt: (debtId: string, paymentAmount: number) => void;
   undoDebtPayment: (debtId: string, paymentAmount: number) => void;
+  addCuentaPorCobrar: (cuenta: Omit<CuentaPorCobrar, 'id' | 'created_at'>) => CuentaPorCobrar;
+  marcarCuentaPorCobrar: (cuentaId: string, montoCobrado: number) => void;
+  removeCuentaPorCobrar: (cuentaId: string) => void;
   balancesBySpace: Record<string, SpaceBalance>;
   globalBalance: SpaceBalance;
   stats: {
@@ -85,6 +89,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [deudas, setDeudas] = useState<Deuda[]>([]);
   const [presupuestos, setPresupuestos] = useState<Presupuesto[]>([]);
   const [spaces, setSpaces] = useState<Space[]>([]);
+  const [cuentasPorCobrar, setCuentasPorCobrar] = useState<CuentaPorCobrar[]>([]);
   const [selectedView, setSelectedView] = useState<SpaceView>('global');
   const [selectedPeriod, setSelectedPeriod] = useState<string>(new Date().toISOString().substring(0, 7));
 
@@ -96,6 +101,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setDeudas(data.deudas);
     setPresupuestos(data.presupuestos);
     setSpaces(data.spaces);
+    setCuentasPorCobrar(data.cuentasPorCobrar);
   }, []);
 
   const addMovimiento = useCallback((mov: Omit<Movimiento, 'id' | 'created_at' | 'periodo' | 'año' | 'mes' | 'space_id'> & { space_id?: string }) => {
@@ -209,6 +215,44 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setClientesMRR(prev => {
       const updated = prev.filter(c => c.id !== id);
       saveData({ clientesMRR: updated });
+      return updated;
+    });
+  }, []);
+
+  const addCuentaPorCobrar = useCallback((cuenta: Omit<CuentaPorCobrar, 'id' | 'created_at'>) => {
+    const id = crypto.randomUUID();
+    const newCuenta = { ...cuenta, id, created_at: new Date().toISOString() };
+    setCuentasPorCobrar(prev => {
+      const updated = [...prev, newCuenta];
+      saveData({ cuentasPorCobrar: updated });
+      return updated;
+    });
+    return newCuenta;
+  }, []);
+
+  const marcarCuentaPorCobrar = useCallback((cuentaId: string, montoCobrado: number) => {
+    setCuentasPorCobrar(prev => {
+      const cuenta = prev.find(c => c.id === cuentaId);
+      if (!cuenta) return prev;
+
+      const newCobrado = Math.min(cuenta.monto, cuenta.monto_cobrado + montoCobrado);
+      const newEstado: CuentaPorCobrar['estado'] =
+        newCobrado >= cuenta.monto ? 'Cobrado'
+        : newCobrado > 0 ? 'Parcial'
+        : 'Pendiente';
+
+      const updated = prev.map(c =>
+        c.id === cuentaId ? { ...c, monto_cobrado: newCobrado, estado: newEstado } : c
+      );
+      saveData({ cuentasPorCobrar: updated });
+      return updated;
+    });
+  }, []);
+
+  const removeCuentaPorCobrar = useCallback((cuentaId: string) => {
+    setCuentasPorCobrar(prev => {
+      const updated = prev.filter(c => c.id !== cuentaId);
+      saveData({ cuentasPorCobrar: updated });
       return updated;
     });
   }, []);
@@ -543,6 +587,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     deudas,
     presupuestos,
     spaces,
+    cuentasPorCobrar,
     selectedView,
     setSelectedView,
     selectedPeriod,
@@ -560,6 +605,9 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     registrarPagoProyecto,
     updateDebt,
     undoDebtPayment,
+    addCuentaPorCobrar,
+    marcarCuentaPorCobrar,
+    removeCuentaPorCobrar,
     balancesBySpace,
     globalBalance,
     stats,

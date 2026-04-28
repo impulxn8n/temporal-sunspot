@@ -1,12 +1,70 @@
-import type { Movimiento, ClienteMRR, Proyecto, Deuda, Presupuesto } from '../types';
+import type { Movimiento, ClienteMRR, Proyecto, Deuda, Presupuesto, CuentaPorCobrar } from '../types';
 
 // App arranca desde abril 2026.
 export const mockProyectos: Proyecto[] = [];
 export const mockPresupuestos: Presupuesto[] = [];
 
+// Saldo inicial SM DIGITALS: 1.013.000 COP
+export const mockSaldoInicial: Movimiento = {
+  id: 'saldo_inicial_smdigitals',
+  fecha: '2026-04-01',
+  periodo: '2026-04',
+  año: 2026,
+  mes: 4,
+  unidad: 'SM DIGITALS',
+  space_id: 'sp_smdigitals',
+  tipo_movimiento: 'Ingreso',
+  categoria: 'Inicial',
+  subcategoria: 'Saldo inicial',
+  cliente_proveedor: 'Saldo inicial',
+  descripcion: 'Saldo inicial Bancolombia',
+  metodo_pago: 'Bancolombia',
+  monto: 1_013_000,
+  recurrente: false,
+  estado: 'Pagado',
+  impacto: 'Core',
+  cuenta: 'Bancolombia',
+  created_at: '2026-04-01T00:00:00Z',
+};
+
+// Clientes que me deben dinero
+export const mockCuentasPorCobrar: CuentaPorCobrar[] = [
+  {
+    id: 'cxc_juan_tasama',
+    cliente: 'Juan Tasama',
+    monto: 4_900_000,
+    fecha_emision: '2026-04-01',
+    descripcion: 'Servicio profesional',
+    estado: 'Pendiente',
+    monto_cobrado: 0,
+    created_at: '2026-04-01T08:00:00Z',
+  },
+  {
+    id: 'cxc_victor_chalarca',
+    cliente: 'Victor Chalarca',
+    monto: 620_000,
+    fecha_emision: '2026-04-05',
+    descripcion: 'Servicio profesional',
+    estado: 'Pendiente',
+    monto_cobrado: 0,
+    created_at: '2026-04-05T08:00:00Z',
+  },
+  {
+    id: 'cxc_juan_lomo_digital',
+    cliente: 'Juan Lomo Digital',
+    monto: 500_000,
+    fecha_emision: '2026-04-10',
+    descripcion: 'Servicio profesional',
+    estado: 'Pendiente',
+    monto_cobrado: 0,
+    created_at: '2026-04-10T08:00:00Z',
+  },
+];
+
 // Gastos fijos recurrentes de abril 2026.
 // Marcados como recurrente=true para que la proyección los detecte como plantillas mensuales.
 export const mockMovimientos: Movimiento[] = [
+  mockSaldoInicial,
   {
     id: 'gf_oficina_abr',
     fecha: '2026-04-01',
@@ -135,7 +193,7 @@ export const mockDeudas: Deuda[] = [
     acreedor: 'Préstamo',
     tipo: 'Préstamo',
     saldo_inicial: 4_100_000,
-    cuota_mensual: 0,
+    cuota_mensual: 4_100_000,
     pagado: 0,
     saldo_restante: 4_100_000,
     fecha_pago: '25',
