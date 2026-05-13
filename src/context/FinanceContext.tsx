@@ -1,9 +1,11 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useMemo } from 'react';
 import type { Movimiento, ClienteMRR, Proyecto, Deuda, Presupuesto, Space, SpaceView, CuentaPorCobrar } from '../types';
-import { loadData, saveData } from '../lib/storage';
-import { spaceIdToUnidad, unidadToSpaceId, SPACE_IDS } from '../lib/spaces';
+import { loadData } from '../lib/storage';
+import { spaceIdToUnidad, unidadToSpaceId, SPACE_IDS, defaultSpaces } from '../lib/spaces';
 import { createFinanceSpreadsheet, updateSheetValues, getSpreadsheetIdByName, getSheetValues } from '../lib/googleSheets';
 import { calcularDistribucionCliente } from '../lib/clienteCalc';
+import { db } from '../lib/supabaseStorage';
+import { mockMovimientos, mockClientesMRR, mockDeudas, mockCuentasPorCobrar } from '../lib/mockData';
 
 export interface SpaceBalance {
   spaceId: string;
@@ -96,14 +98,61 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [selectedPeriod, setSelectedPeriod] = useState<string>(new Date().toISOString().substring(0, 7));
 
   useEffect(() => {
-    const data = loadData();
-    setMovimientos(data.movimientos);
-    setClientesMRR(data.clientesMRR);
-    setProyectos(data.proyectos);
-    setDeudas(data.deudas);
-    setPresupuestos(data.presupuestos);
-    setSpaces(data.spaces);
-    setCuentasPorCobrar(data.cuentasPorCobrar);
+    const bootstrap = async () => {
+      try {
+        const [movs, clients, projs, debts, budgets, cuentas] = await Promise.all([
+          db.movimientos.load(),
+          db.clientesMRR.load(),
+          db.proyectos.load(),
+          db.deudas.load(),
+          db.presupuestos.load(),
+          db.cuentasPorCobrar.load(),
+        ]);
+
+        // Si Supabase está vacío, sembrar con datos iniciales
+        if (movs.length === 0) {
+          await db.movimientos.upsert(mockMovimientos);
+          setMovimientos(mockMovimientos);
+        } else {
+          setMovimientos(movs);
+        }
+
+        if (clients.length === 0) {
+          for (const c of mockClientesMRR) await db.clientesMRR.upsert(c);
+          setClientesMRR(mockClientesMRR);
+        } else {
+          setClientesMRR(clients);
+        }
+
+        if (debts.length === 0) {
+          for (const d of mockDeudas) await db.deudas.upsert(d);
+          setDeudas(mockDeudas);
+        } else {
+          setDeudas(debts);
+        }
+
+        if (cuentas.length === 0) {
+          for (const c of mockCuentasPorCobrar) await db.cuentasPorCobrar.upsert(c);
+          setCuentasPorCobrar(mockCuentasPorCobrar);
+        } else {
+          setCuentasPorCobrar(cuentas);
+        }
+
+        setProyectos(projs);
+        setPresupuestos(budgets);
+      } catch (err) {
+        console.error('[Bootstrap] Supabase failed, falling back to localStorage:', err);
+        const data = loadData();
+        setMovimientos(data.movimientos);
+        setClientesMRR(data.clientesMRR);
+        setProyectos(data.proyectos);
+        setDeudas(data.deudas);
+        setPresupuestos(data.presupuestos);
+        setCuentasPorCobrar(data.cuentasPorCobrar);
+      }
+      setSpaces(defaultSpaces);
+    };
+    bootstrap();
   }, []);
 
   const addMovimiento = useCallback((mov: Omit<Movimiento, 'id' | 'created_at' | 'periodo' | 'año' | 'mes' | 'space_id'> & { space_id?: string }) => {
@@ -119,11 +168,8 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       mes: date.getMonth() + 1,
     };
 
-    setMovimientos(prev => {
-      const updated = [...prev, newMov];
-      saveData({ movimientos: updated });
-      return updated;
-    });
+    setMovimientos(prev => [...prev, newMov]);
+    db.movimientos.upsert([newMov]).catch(console.error);
     return newMov;
   }, []);
 
@@ -180,45 +226,34 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       transfer_counterpart_space_id: fromSpaceId,
     };
 
-    setMovimientos(prev => {
-      const updated = [...prev, outMov, inMov];
-      saveData({ movimientos: updated });
-      return updated;
-    });
+    setMovimientos(prev => [...prev, outMov, inMov]);
+    db.movimientos.upsert([outMov, inMov]).catch(console.error);
   }, []);
 
   const removeTransferencia = useCallback((pairId: string) => {
-    setMovimientos(prev => {
-      const updated = prev.filter(m => m.transfer_pair_id !== pairId);
-      saveData({ movimientos: updated });
-      return updated;
-    });
+    setMovimientos(prev => prev.filter(m => m.transfer_pair_id !== pairId));
+    db.movimientos.deleteByPairId(pairId).catch(console.error);
   }, []);
 
   const addClienteMRR = useCallback((cliente: Omit<ClienteMRR, 'id'>) => {
     const newCliente: ClienteMRR = { ...cliente, id: crypto.randomUUID() };
-    setClientesMRR(prev => {
-      const updated = [...prev, newCliente];
-      saveData({ clientesMRR: updated });
-      return updated;
-    });
+    setClientesMRR(prev => [...prev, newCliente]);
+    db.clientesMRR.upsert(newCliente).catch(console.error);
     return newCliente;
   }, []);
 
   const updateClienteMRR = useCallback((id: string, updates: Partial<Omit<ClienteMRR, 'id'>>) => {
     setClientesMRR(prev => {
       const updated = prev.map(c => (c.id === id ? { ...c, ...updates } : c));
-      saveData({ clientesMRR: updated });
+      const updatedCliente = updated.find(c => c.id === id);
+      if (updatedCliente) db.clientesMRR.upsert(updatedCliente).catch(console.error);
       return updated;
     });
   }, []);
 
   const removeClienteMRR = useCallback((id: string) => {
-    setClientesMRR(prev => {
-      const updated = prev.filter(c => c.id !== id);
-      saveData({ clientesMRR: updated });
-      return updated;
-    });
+    setClientesMRR(prev => prev.filter(c => c.id !== id));
+    db.clientesMRR.delete(id).catch(console.error);
   }, []);
 
   const registerMRRPayment = useCallback((clienteId: string, shouldDistribute: boolean = true) => {
@@ -283,13 +318,9 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   }, [addMovimiento, addTransferencia]);
 
   const addCuentaPorCobrar = useCallback((cuenta: Omit<CuentaPorCobrar, 'id' | 'created_at'>) => {
-    const id = crypto.randomUUID();
-    const newCuenta = { ...cuenta, id, created_at: new Date().toISOString() };
-    setCuentasPorCobrar(prev => {
-      const updated = [...prev, newCuenta];
-      saveData({ cuentasPorCobrar: updated });
-      return updated;
-    });
+    const newCuenta: CuentaPorCobrar = { ...cuenta, id: crypto.randomUUID(), created_at: new Date().toISOString() };
+    setCuentasPorCobrar(prev => [...prev, newCuenta]);
+    db.cuentasPorCobrar.upsert(newCuenta).catch(console.error);
     return newCuenta;
   }, []);
 
@@ -297,27 +328,17 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setCuentasPorCobrar(prev => {
       const cuenta = prev.find(c => c.id === cuentaId);
       if (!cuenta) return prev;
-
       const newCobrado = Math.min(cuenta.monto, cuenta.monto_cobrado + montoCobrado);
       const newEstado: CuentaPorCobrar['estado'] =
-        newCobrado >= cuenta.monto ? 'Cobrado'
-        : newCobrado > 0 ? 'Parcial'
-        : 'Pendiente';
-
-      const updated = prev.map(c =>
-        c.id === cuentaId ? { ...c, monto_cobrado: newCobrado, estado: newEstado } : c
-      );
-      saveData({ cuentasPorCobrar: updated });
-      return updated;
+        newCobrado >= cuenta.monto ? 'Cobrado' : newCobrado > 0 ? 'Parcial' : 'Pendiente';
+      db.cuentasPorCobrar.update(cuentaId, { monto_cobrado: newCobrado, estado: newEstado }).catch(console.error);
+      return prev.map(c => c.id === cuentaId ? { ...c, monto_cobrado: newCobrado, estado: newEstado } : c);
     });
   }, []);
 
   const removeCuentaPorCobrar = useCallback((cuentaId: string) => {
-    setCuentasPorCobrar(prev => {
-      const updated = prev.filter(c => c.id !== cuentaId);
-      saveData({ cuentasPorCobrar: updated });
-      return updated;
-    });
+    setCuentasPorCobrar(prev => prev.filter(c => c.id !== cuentaId));
+    db.cuentasPorCobrar.delete(cuentaId).catch(console.error);
   }, []);
 
   const updateDebt = useCallback((debtId: string, paymentAmount: number) => {
@@ -337,7 +358,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       debtToUpdate = updatedDebt;
 
       const updated = prev.map(d => d.id === debtId ? updatedDebt : d);
-      saveData({ deudas: updated });
+      db.deudas.update(debtId, { pagado: updatedDebt.pagado, saldo_restante: updatedDebt.saldo_restante, estado: updatedDebt.estado }).catch(console.error);
       return updated;
     });
 
@@ -365,26 +386,22 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const undoDebtPayment = useCallback((debtId: string, paymentAmount: number) => {
     setDeudas(prev => {
-      const updated = prev.map(d => {
+      return prev.map(d => {
         if (d.id === debtId) {
           const newPagado = Math.max(0, d.pagado - paymentAmount);
-          return { ...d, pagado: newPagado, saldo_restante: d.saldo_inicial - newPagado };
+          const updated = { ...d, pagado: newPagado, saldo_restante: d.saldo_inicial - newPagado };
+          db.deudas.update(debtId, { pagado: updated.pagado, saldo_restante: updated.saldo_restante }).catch(console.error);
+          return updated;
         }
         return d;
       });
-      saveData({ deudas: updated });
-      return updated;
     });
   }, []);
 
   const addProyecto = useCallback((proyecto: Omit<Proyecto, 'id'>) => {
-    const id = crypto.randomUUID();
-    const newProyecto = { ...proyecto, id };
-    setProyectos(prev => {
-      const updated = [...prev, newProyecto];
-      saveData({ proyectos: updated });
-      return updated;
-    });
+    const newProyecto: Proyecto = { ...proyecto, id: crypto.randomUUID() };
+    setProyectos(prev => [...prev, newProyecto]);
+    db.proyectos.upsert(newProyecto).catch(console.error);
     return newProyecto;
   }, []);
 
@@ -423,7 +440,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         proyecto_id: projectId
       });
 
-      saveData({ proyectos: updatedProyectos });
+      db.proyectos.update(projectId, { cobrado: newCobrado, pendiente: newPendiente }).catch(console.error);
       return updatedProyectos;
     });
   }, [addMovimiento]);
@@ -561,13 +578,12 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     if (mappedDebts.length > 0) setDeudas(mappedDebts);
     if (mappedBudgets.length > 0) setPresupuestos(mappedBudgets);
 
-    saveData({
-      movimientos: mappedMovs,
-      clientesMRR: mappedClients,
-      proyectos: mappedProjs,
-      deudas: mappedDebts,
-      presupuestos: mappedBudgets
-    });
+    // Persist imported data to Supabase
+    if (mappedMovs.length > 0) db.movimientos.upsert(mappedMovs).catch(console.error);
+    if (mappedClients.length > 0) mappedClients.forEach(c => db.clientesMRR.upsert(c).catch(console.error));
+    if (mappedProjs.length > 0) mappedProjs.forEach(p => db.proyectos.upsert(p).catch(console.error));
+    if (mappedDebts.length > 0) mappedDebts.forEach(d => db.deudas.upsert(d).catch(console.error));
+    if (mappedBudgets.length > 0) mappedBudgets.forEach(b => db.presupuestos.upsert(b).catch(console.error));
   }, []);
 
   const syncAllToGoogleSheets = useCallback(async (accessToken: string) => {
