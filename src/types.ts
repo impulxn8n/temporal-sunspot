@@ -1,4 +1,4 @@
-export type Unidad = 'SM DIGITALS' | 'Personal';
+export type Unidad = 'SM DIGITALS' | 'Personal' | 'IMPULSY' | 'DANS.IA';
 export type TipoMovimiento = 'Ingreso' | 'Gasto' | 'Inversión' | 'Transferencia';
 export type EstadoMovimiento = 'Pagado' | 'Pendiente' | 'Parcial';
 export type Impacto = 'Core' | 'Privado' | 'Extraordinario';
@@ -68,10 +68,12 @@ export interface ClienteMRR {
 
 export interface Proyecto {
   id: string;
+  empresa: 'SM DIGITALS' | 'IMPULSY' | 'DANS.IA';
   cliente: string;
   nombre_proyecto: string;
   tipo: string;
   valor_total: number;
+  comision_pct: number; // % que te corresponde: 100 para SM DIGITALS, 37/20/50 para IMPULSY, 50 para DANS.IA
   anticipo: number;
   cobrado: number;
   pendiente: number;

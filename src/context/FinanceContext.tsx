@@ -400,17 +400,22 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         p.id === projectId ? { ...p, cobrado: newCobrado, pendiente: newPendiente } : p
       );
 
+      const empresa = project.empresa ?? 'SM DIGITALS';
+      const spaceId = unidadToSpaceId(empresa);
+      const comisionPct = project.comision_pct ?? 100;
+      const ingresoReal = Math.round(amount * (comisionPct / 100));
+
       addMovimiento({
         fecha: new Date().toISOString().split('T')[0],
-        unidad: 'SM DIGITALS',
-        space_id: 'sp_smdigitals',
+        unidad: empresa,
+        space_id: spaceId,
         tipo_movimiento: 'Ingreso',
         categoria: 'Proyecto',
         subcategoria: project.tipo,
         cliente_proveedor: project.cliente,
-        descripcion: `Pago Proyecto: ${project.nombre_proyecto}`,
+        descripcion: `Pago Proyecto: ${project.nombre_proyecto} (${comisionPct}%)`,
         metodo_pago: method,
-        monto: amount,
+        monto: ingresoReal,
         recurrente: false,
         estado: 'Pagado',
         impacto: 'Core',

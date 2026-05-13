@@ -3,6 +3,8 @@ import type { Space, Unidad, Movimiento } from '../types';
 export const SPACE_IDS = {
   PERSONAL: 'sp_personal',
   BUSINESS: 'sp_smdigitals',
+  IMPULSY: 'sp_impulsy',
+  DANSAI: 'sp_dansai',
   BOLS_OPERATIVO: 'sp_bols_operativo',
   BOLS_EMERGENCIA: 'sp_bols_emergencia',
 } as const;
@@ -29,6 +31,22 @@ export const defaultSpaces: Space[] = [
     created_at: '2026-01-01T00:00:00Z',
   },
   {
+    id: SPACE_IDS.IMPULSY,
+    name: 'IMPULSY',
+    type: 'business',
+    color: '#8B5CF6',
+    icon: 'Zap',
+    created_at: '2026-01-01T00:00:00Z',
+  },
+  {
+    id: SPACE_IDS.DANSAI,
+    name: 'DANS.IA',
+    type: 'business',
+    color: '#06B6D4',
+    icon: 'Brain',
+    created_at: '2026-01-01T00:00:00Z',
+  },
+  {
     id: SPACE_IDS.BOLS_OPERATIVO,
     name: 'Bolsillo Operativo',
     type: 'business',
@@ -48,19 +66,19 @@ export const defaultSpaces: Space[] = [
 
 export const unidadToSpaceId = (unidad: Unidad): string => {
   switch (unidad) {
-    case 'SM DIGITALS':
-      return SPACE_IDS.BUSINESS;
-    case 'Personal':
-      return SPACE_IDS.PERSONAL;
+    case 'SM DIGITALS': return SPACE_IDS.BUSINESS;
+    case 'IMPULSY':     return SPACE_IDS.IMPULSY;
+    case 'DANS.IA':     return SPACE_IDS.DANSAI;
+    case 'Personal':    return SPACE_IDS.PERSONAL;
   }
 };
 
 export const spaceIdToUnidad = (spaceId: string): Unidad => {
   switch (spaceId) {
-    case SPACE_IDS.BUSINESS:
-      return 'SM DIGITALS';
-    default:
-      return 'Personal';
+    case SPACE_IDS.BUSINESS:      return 'SM DIGITALS';
+    case SPACE_IDS.IMPULSY:       return 'IMPULSY';
+    case SPACE_IDS.DANSAI:        return 'DANS.IA';
+    default:                      return 'Personal';
   }
 };
 

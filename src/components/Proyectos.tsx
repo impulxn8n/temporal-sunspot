@@ -16,11 +16,15 @@ export const Proyectos: React.FC = () => {
   const [selectedProject, setSelectedProject] = useState<Proyecto | null>(null);
   const [paymentAmount, setPaymentAmount] = useState<number>(0);
   const [paymentMethod, setPaymentMethod] = useState<string>('Transferencia');
+  const DEFAULT_COMISION: Record<string, number> = { 'SM DIGITALS': 100, 'IMPULSY': 37, 'DANS.IA': 50 };
+
   const [newProyecto, setNewProyecto] = useState<Omit<Proyecto, 'id'>>({
+    empresa: 'SM DIGITALS',
     cliente: '',
     nombre_proyecto: '',
     tipo: '',
     valor_total: 0,
+    comision_pct: 100,
     anticipo: 0,
     cobrado: 0,
     pendiente: 0,
@@ -29,6 +33,8 @@ export const Proyectos: React.FC = () => {
     rentabilidad_estimada: 0,
     fase: 'Inicio'
   });
+
+  const ingresoReal = Math.round(newProyecto.valor_total * (newProyecto.comision_pct / 100));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -141,6 +147,18 @@ export const Proyectos: React.FC = () => {
             </button>
             <h3 className="text-3xl font-black text-white mb-8 tracking-tighter">Configurar Proyecto</h3>
             <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* Empresa */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-amber-500 uppercase tracking-[0.2em] pl-1">Empresa</label>
+                <select value={newProyecto.empresa} onChange={e => {
+                  const emp = e.target.value as Proyecto['empresa'];
+                  setNewProyecto({...newProyecto, empresa: emp, comision_pct: DEFAULT_COMISION[emp]});
+                }} className="w-full bg-black border border-[#222222] rounded-2xl px-5 py-4 text-white focus:border-amber-500 outline-none transition-all font-black appearance-none">
+                  <option value="SM DIGITALS">SM DIGITALS</option>
+                  <option value="IMPULSY">IMPULSY</option>
+                  <option value="DANS.IA">DANS.IA</option>
+                </select>
+              </div>
               <div className="space-y-2">
                 <label className="text-[9px] lg:text-[10px] font-black text-brand-gold uppercase tracking-[0.2em] pl-1">Cliente</label>
                 <input required type="text" value={newProyecto.cliente} onChange={e => setNewProyecto({...newProyecto, cliente: e.target.value})} className="w-full bg-[#050508] border border-white/5 rounded-xl lg:rounded-2xl px-5 py-3 lg:py-4 text-white focus:border-brand-gold outline-none transition-all font-bold text-sm" />
@@ -164,12 +182,21 @@ export const Proyectos: React.FC = () => {
                 </select>
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-amber-500 uppercase tracking-[0.2em] pl-1">Valor Total (COP)</label>
-                <input required type="number" value={newProyecto.valor_total} onChange={e => setNewProyecto({...newProyecto, valor_total: Number(e.target.value)})} className="w-full bg-black border border-[#222222] rounded-2xl px-5 py-4 text-white focus:border-amber-500 outline-none transition-all font-bold" />
+                <label className="text-[10px] font-black text-amber-500 uppercase tracking-[0.2em] pl-1">Valor Total del Proyecto (COP)</label>
+                <input required type="number" value={newProyecto.valor_total || ''} onChange={e => setNewProyecto({...newProyecto, valor_total: Number(e.target.value)})} className="w-full bg-black border border-[#222222] rounded-2xl px-5 py-4 text-white focus:border-amber-500 outline-none transition-all font-bold" />
+              </div>
+              {/* Comisión + ingreso real */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-amber-500 uppercase tracking-[0.2em] pl-1">Tu % de Comisión</label>
+                <input required type="number" min="1" max="100" value={newProyecto.comision_pct} onChange={e => setNewProyecto({...newProyecto, comision_pct: Number(e.target.value)})} className="w-full bg-black border border-[#222222] rounded-2xl px-5 py-4 text-white focus:border-amber-500 outline-none transition-all font-bold" />
+              </div>
+              <div className="md:col-span-2 bg-amber-500/10 border border-amber-500/30 rounded-2xl px-5 py-4 flex items-center justify-between">
+                <span className="text-[10px] font-black text-amber-500 uppercase tracking-widest">Tu ingreso real ({newProyecto.comision_pct}%)</span>
+                <span className="text-xl font-black text-white">${ingresoReal.toLocaleString('es-CO')}</span>
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-amber-500 uppercase tracking-[0.2em] pl-1">Total Cobrado (COP)</label>
-                <input required type="number" value={newProyecto.cobrado} onChange={e => setNewProyecto({...newProyecto, cobrado: Number(e.target.value)})} className="w-full bg-black border border-[#222222] rounded-2xl px-5 py-4 text-white focus:border-amber-500 outline-none transition-all font-bold" />
+                <input required type="number" value={newProyecto.cobrado || ''} onChange={e => setNewProyecto({...newProyecto, cobrado: Number(e.target.value)})} className="w-full bg-black border border-[#222222] rounded-2xl px-5 py-4 text-white focus:border-amber-500 outline-none transition-all font-bold" />
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-amber-500 uppercase tracking-[0.2em] pl-1">Número de Cuotas (Calendar)</label>
