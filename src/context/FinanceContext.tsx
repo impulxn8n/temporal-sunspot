@@ -402,8 +402,33 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const newProyecto: Proyecto = { ...proyecto, id: crypto.randomUUID() };
     setProyectos(prev => [...prev, newProyecto]);
     db.proyectos.upsert(newProyecto).catch(console.error);
+
+    // Si hay cobrado inicial, crear movimiento de ingreso automáticamente
+    if (newProyecto.cobrado > 0) {
+      const empresa = newProyecto.empresa ?? 'SM DIGITALS';
+      const comisionPct = newProyecto.comision_pct ?? 100;
+      const ingresoReal = Math.round(newProyecto.cobrado * (comisionPct / 100));
+      addMovimiento({
+        fecha: newProyecto.fecha_inicio,
+        unidad: empresa,
+        space_id: unidadToSpaceId(empresa),
+        tipo_movimiento: 'Ingreso',
+        categoria: 'Proyecto',
+        subcategoria: newProyecto.tipo,
+        cliente_proveedor: newProyecto.cliente,
+        descripcion: `Pago Proyecto: ${newProyecto.nombre_proyecto} (${comisionPct}%)`,
+        metodo_pago: 'Transferencia',
+        monto: ingresoReal,
+        recurrente: false,
+        estado: 'Pagado',
+        impacto: 'Core',
+        cuenta: 'Bancolombia',
+        proyecto_id: newProyecto.id,
+      });
+    }
+
     return newProyecto;
-  }, []);
+  }, [addMovimiento]);
 
   const registrarPagoProyecto = useCallback((projectId: string, amount: number, method: string) => {
     setProyectos(prev => {
