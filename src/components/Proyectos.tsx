@@ -238,6 +238,19 @@ export const Proyectos: React.FC = () => {
             <div className="mb-8">
               <h3 className="text-2xl font-black text-white tracking-tighter">Registrar Pago</h3>
               <p className="text-[10px] text-amber-500 font-black uppercase tracking-widest mt-1">{selectedProject.nombre_proyecto}</p>
+              <div className="flex items-center gap-2 mt-3">
+                <span className="text-[9px] font-black bg-white/10 px-2 py-1 rounded-lg text-slate-300 uppercase tracking-widest">
+                  {selectedProject.empresa ?? 'SM DIGITALS'}
+                </span>
+                <span className="text-[9px] font-black bg-amber-500/20 text-amber-400 px-2 py-1 rounded-lg uppercase tracking-widest">
+                  {selectedProject.comision_pct ?? 100}% comisión
+                </span>
+              </div>
+              {paymentAmount > 0 && (
+                <p className="text-[10px] text-emerald-400 font-black mt-2">
+                  Tu ingreso real: ${Math.round(paymentAmount * ((selectedProject.comision_pct ?? 100) / 100)).toLocaleString('es-CO')}
+                </p>
+              )}
             </div>
             <form onSubmit={handlePayment} className="space-y-6">
               <div className="space-y-2">

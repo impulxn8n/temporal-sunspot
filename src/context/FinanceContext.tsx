@@ -138,7 +138,16 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
           setCuentasPorCobrar(cuentas);
         }
 
-        setProyectos(projs);
+        // Para proyectos: si Supabase está vacío, intentar recuperar de localStorage
+        if (projs.length === 0) {
+          const local = loadData();
+          if (local.proyectos.length > 0) {
+            setProyectos(local.proyectos);
+            for (const p of local.proyectos) await db.proyectos.upsert(p).catch(console.error);
+          }
+        } else {
+          setProyectos(projs);
+        }
         setPresupuestos(budgets);
       } catch (err) {
         console.error('[Bootstrap] Supabase failed, falling back to localStorage:', err);
