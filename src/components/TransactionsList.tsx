@@ -3,10 +3,10 @@ import { useFinance } from '../hooks/useFinance';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { PeriodSelector } from './PeriodSelector';
-import { ArrowUpRight, ArrowDownRight, Search } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, Search, Trash2 } from 'lucide-react';
 
 export const TransactionsList: React.FC = () => {
-  const { filteredMovimientos } = useFinance();
+  const { filteredMovimientos, removeMovimiento } = useFinance();
 
   return (
     <div className="space-y-10 animate-in fade-in duration-700 pb-20 text-slate-200">
@@ -33,6 +33,7 @@ export const TransactionsList: React.FC = () => {
                 <th className="px-8 py-6 text-[10px] font-black text-slate-500 uppercase tracking-[0.25em]">Entidad / Concepto</th>
                 <th className="px-8 py-6 text-[10px] font-black text-slate-500 uppercase tracking-[0.25em]">Monto</th>
                 <th className="px-8 py-6 text-[10px] font-black text-slate-500 uppercase tracking-[0.25em]">Estado</th>
+                <th className="px-8 py-6 text-[10px] font-black text-slate-500 uppercase tracking-[0.25em]"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
@@ -72,6 +73,19 @@ export const TransactionsList: React.FC = () => {
                         }`}>
                           {mov.estado}
                         </span>
+                      </td>
+                      <td className="px-4 lg:px-6 py-4 lg:py-6">
+                        <button
+                          onClick={() => {
+                            if (window.confirm(`¿Eliminar movimiento de $${mov.monto.toLocaleString('es-CO')} (${mov.cliente_proveedor})?`)) {
+                              removeMovimiento(mov.id);
+                            }
+                          }}
+                          className="opacity-0 group-hover:opacity-100 p-2 rounded-xl text-slate-600 hover:text-red-400 hover:bg-red-400/10 transition-all"
+                          title="Eliminar movimiento"
+                        >
+                          <Trash2 size={14} />
+                        </button>
                       </td>
                     </tr>
                   );

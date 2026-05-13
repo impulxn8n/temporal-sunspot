@@ -64,6 +64,10 @@ export const db = {
       const { error } = await supabase.from('proyectos').update(updates).eq('id', id);
       handle(error, 'update proyecto');
     },
+    delete: async (id: string) => {
+      const { error } = await supabase.from('proyectos').delete().eq('id', id);
+      handle(error, 'delete proyecto');
+    },
   },
 
   deudas: {

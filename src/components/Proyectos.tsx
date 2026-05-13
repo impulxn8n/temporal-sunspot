@@ -1,14 +1,17 @@
 import React, { useState } from 'react';
 import { useFinance } from '../context/FinanceContext';
-import { Briefcase, Clock, CheckCircle, PlusCircle, X, Calendar as CalendarIcon, RefreshCw } from 'lucide-react';
+import { Briefcase, Clock, CheckCircle, PlusCircle, X, Calendar as CalendarIcon, RefreshCw, Trash2, Edit2 } from 'lucide-react';
 import type { Proyecto } from '../types';
 import { useGoogleAuth } from '../hooks/useGoogleAuth';
 import { getOrCreateFinanceCalendar, createPaymentEvent } from '../lib/googleCalendar';
 
 export const Proyectos: React.FC = () => {
-  const { proyectos, addProyecto, registrarPagoProyecto } = useFinance();
+  const { proyectos, addProyecto, registrarPagoProyecto, removeProyecto, updateProyecto } = useFinance();
   const [showForm, setShowForm] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingProject, setEditingProject] = useState<Proyecto | null>(null);
+  const [editValorTotal, setEditValorTotal] = useState<number>(0);
   const { isConnected, accessToken } = useGoogleAuth();
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncingProjectId, setSyncingProjectId] = useState<string | null>(null);
@@ -283,6 +286,43 @@ export const Proyectos: React.FC = () => {
         </div>
       )}
 
+      {showEditModal && editingProject && (
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-xl z-50 flex items-center justify-center p-6 sm:p-10">
+          <div className="bg-[#111111] border border-[#222222] w-full max-w-md rounded-[40px] p-10 shadow-[0_0_100px_rgba(0,0,0,0.8)] relative animate-in zoom-in duration-300">
+            <button onClick={() => setShowEditModal(false)} className="absolute top-6 right-6 text-slate-500 hover:text-white transition-colors">
+              <X size={24} />
+            </button>
+            <h3 className="text-2xl font-black text-white tracking-tighter mb-2">Editar Proyecto</h3>
+            <p className="text-[10px] text-amber-500 font-black uppercase tracking-widest mb-8">{editingProject.nombre_proyecto}</p>
+            <form onSubmit={e => {
+              e.preventDefault();
+              const newPendiente = Math.max(0, editValorTotal - editingProject.cobrado);
+              updateProyecto(editingProject.id, { valor_total: editValorTotal, pendiente: newPendiente });
+              setShowEditModal(false);
+              setEditingProject(null);
+            }} className="space-y-6">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] pl-1">Nuevo Valor Total (COP)</label>
+                <input
+                  required
+                  type="number"
+                  value={editValorTotal || ''}
+                  onChange={e => setEditValorTotal(Number(e.target.value))}
+                  className="w-full bg-black border border-[#222222] rounded-2xl px-5 py-4 text-white focus:border-amber-500 outline-none transition-all font-bold text-xl"
+                />
+              </div>
+              <div className="bg-white/5 rounded-2xl px-5 py-4 text-[11px] text-slate-400 font-bold space-y-1">
+                <p>Cobrado: <span className="text-emerald-400">${editingProject.cobrado.toLocaleString('es-CO')}</span></p>
+                <p>Nuevo pendiente: <span className="text-amber-400">${Math.max(0, editValorTotal - editingProject.cobrado).toLocaleString('es-CO')}</span></p>
+              </div>
+              <button type="submit" className="w-full bg-amber-500 text-black font-black py-4 rounded-2xl hover:bg-amber-400 transition-all uppercase tracking-widest text-xs">
+                GUARDAR CAMBIOS
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
         {proyectos.map((proyecto) => {
           const progress = (proyecto.cobrado / proyecto.valor_total) * 100;
@@ -347,26 +387,47 @@ export const Proyectos: React.FC = () => {
                   </div>
                 </div>
                 
-                <div className="grid grid-cols-2 gap-3 lg:gap-4 w-full sm:w-auto relative z-10">
-                  <button 
+                <div className="flex flex-wrap gap-3 w-full sm:w-auto relative z-10">
+                  <button
                     onClick={() => {
                       setSelectedProject(proyecto);
                       setPaymentAmount(proyecto.pendiente);
                       setShowPaymentModal(true);
                     }}
                     disabled={proyecto.estado === 'Completado'}
-                    className="py-3 lg:py-4 px-4 lg:px-6 bg-white text-black text-[9px] lg:text-[10px] font-black rounded-xl lg:rounded-2xl hover:bg-brand-gold transition-all uppercase tracking-widest disabled:opacity-50 disabled:bg-slate-800 disabled:text-slate-500 shadow-xl shadow-black/20"
+                    className="flex-1 py-3 lg:py-4 px-4 lg:px-6 bg-white text-black text-[9px] lg:text-[10px] font-black rounded-xl lg:rounded-2xl hover:bg-brand-gold transition-all uppercase tracking-widest disabled:opacity-50 disabled:bg-slate-800 disabled:text-slate-500 shadow-xl shadow-black/20"
                   >
                     Ingresar
                   </button>
+                  <button
+                    onClick={() => {
+                      setEditingProject(proyecto);
+                      setEditValorTotal(proyecto.valor_total);
+                      setShowEditModal(true);
+                    }}
+                    className="py-3 lg:py-4 px-3 lg:px-4 bg-white/5 border border-white/10 text-slate-400 text-[9px] lg:text-[10px] font-black rounded-xl lg:rounded-2xl hover:bg-white/10 hover:text-white transition-all flex items-center justify-center gap-2"
+                    title="Editar valor"
+                  >
+                    <Edit2 size={14} />
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (window.confirm(`¿Eliminar el proyecto "${proyecto.nombre_proyecto}"?`)) {
+                        removeProyecto(proyecto.id);
+                      }
+                    }}
+                    className="py-3 lg:py-4 px-3 lg:px-4 bg-red-500/5 border border-red-500/20 text-red-500/60 text-[9px] lg:text-[10px] font-black rounded-xl lg:rounded-2xl hover:bg-red-500/10 hover:text-red-400 transition-all flex items-center justify-center"
+                    title="Eliminar proyecto"
+                  >
+                    <Trash2 size={14} />
+                  </button>
                   {isConnected && (
-                    <button 
+                    <button
                       onClick={() => handleSyncExistingToCalendar(proyecto)}
                       disabled={syncingProjectId === proyecto.id}
-                      className="py-3 lg:py-4 px-4 lg:px-6 bg-brand-income/5 border border-brand-income/20 text-brand-income text-[9px] lg:text-[10px] font-black rounded-xl lg:rounded-2xl hover:bg-brand-income hover:text-black transition-all uppercase tracking-widest flex items-center justify-center gap-2 shadow-xl shadow-black/20"
+                      className="py-3 lg:py-4 px-3 lg:px-4 bg-brand-income/5 border border-brand-income/20 text-brand-income text-[9px] lg:text-[10px] font-black rounded-xl lg:rounded-2xl hover:bg-brand-income hover:text-black transition-all flex items-center justify-center gap-2 shadow-xl shadow-black/20"
                     >
                       {syncingProjectId === proyecto.id ? <RefreshCw size={14} className="animate-spin" /> : <CalendarIcon size={14} />}
-                      <span className="truncate">{syncingProjectId === proyecto.id ? '...' : 'Sync'}</span>
                     </button>
                   )}
                 </div>

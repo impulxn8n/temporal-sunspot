@@ -34,6 +34,7 @@ interface FinanceContextType {
   syncAllToGoogleSheets: (accessToken: string) => Promise<string>;
   importAllFromGoogleSheets: (accessToken: string) => Promise<void>;
   addMovimiento: (mov: Omit<Movimiento, 'id' | 'created_at' | 'periodo' | 'año' | 'mes' | 'space_id'> & { space_id?: string }) => Movimiento;
+  removeMovimiento: (id: string) => void;
   addTransferencia: (params: {
     fromSpaceId: string;
     toSpaceId: string;
@@ -49,6 +50,8 @@ interface FinanceContextType {
   removeClienteMRR: (id: string) => void;
   registerMRRPayment: (clienteId: string, shouldDistribute?: boolean) => void;
   addProyecto: (proyecto: Omit<Proyecto, 'id'>, syncCalendar?: boolean) => void;
+  removeProyecto: (id: string) => void;
+  updateProyecto: (id: string, updates: Partial<Omit<Proyecto, 'id'>>) => void;
   registrarPagoProyecto: (projectId: string, amount: number, method: string) => void;
   updateDebt: (debtId: string, paymentAmount: number) => void;
   undoDebtPayment: (debtId: string, paymentAmount: number) => void;
@@ -180,6 +183,11 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setMovimientos(prev => [...prev, newMov]);
     db.movimientos.upsert([newMov]).catch(console.error);
     return newMov;
+  }, []);
+
+  const removeMovimiento = useCallback((id: string) => {
+    setMovimientos(prev => prev.filter(m => m.id !== id));
+    db.movimientos.deleteById(id).catch(console.error);
   }, []);
 
   const addTransferencia = useCallback((params: {
@@ -438,6 +446,16 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
     return newProyecto;
   }, [addMovimiento]);
+
+  const removeProyecto = useCallback((id: string) => {
+    setProyectos(prev => prev.filter(p => p.id !== id));
+    db.proyectos.delete(id).catch(console.error);
+  }, []);
+
+  const updateProyecto = useCallback((id: string, updates: Partial<Omit<Proyecto, 'id'>>) => {
+    setProyectos(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
+    db.proyectos.update(id, updates).catch(console.error);
+  }, []);
 
   const registrarPagoProyecto = useCallback((projectId: string, amount: number, method: string) => {
     setProyectos(prev => {
@@ -714,6 +732,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     syncAllToGoogleSheets,
     importAllFromGoogleSheets,
     addMovimiento,
+    removeMovimiento,
     addTransferencia,
     removeTransferencia,
     addClienteMRR,
@@ -721,6 +740,8 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     removeClienteMRR,
     registerMRRPayment,
     addProyecto,
+    removeProyecto,
+    updateProyecto,
     registrarPagoProyecto,
     updateDebt,
     undoDebtPayment,
