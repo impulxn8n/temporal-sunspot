@@ -15,14 +15,6 @@ export const BOLSILLO_SPACE_IDS: string[] = [SPACE_IDS.BOLS_OPERATIVO, SPACE_IDS
 
 export const defaultSpaces: Space[] = [
   {
-    id: SPACE_IDS.PERSONAL,
-    name: 'Personal',
-    type: 'personal',
-    color: '#3B82F6',
-    icon: 'User',
-    created_at: '2026-01-01T00:00:00Z',
-  },
-  {
     id: SPACE_IDS.BUSINESS,
     name: 'SM DIGITALS',
     type: 'business',

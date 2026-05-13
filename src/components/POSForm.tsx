@@ -84,7 +84,6 @@ export const POSForm: React.FC = () => {
                 <option value="SM DIGITALS">SM DIGITALS</option>
                 <option value="IMPULSY">IMPULSY</option>
                 <option value="DANS.IA">DANS.IA</option>
-                <option value="Personal">Personal</option>
               </select>
             </div>
 
