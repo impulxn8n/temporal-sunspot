@@ -414,14 +414,13 @@ export const Proyectos: React.FC = () => {
                   {confirmDeleteId === proyecto.id ? (
                     <button
                       onClick={() => { removeProyecto(proyecto.id); setConfirmDeleteId(null); }}
-                      className="py-3 lg:py-4 px-3 lg:px-4 bg-red-500 text-white text-[9px] lg:text-[10px] font-black rounded-xl lg:rounded-2xl transition-all flex items-center justify-center gap-1"
+                      className="py-3 lg:py-4 px-3 lg:px-4 bg-red-500 text-white text-[9px] lg:text-[10px] font-black rounded-xl lg:rounded-2xl transition-all flex items-center justify-center gap-1 animate-pulse"
                     >
                       <Trash2 size={13} /> ¿Sí?
                     </button>
                   ) : (
                     <button
                       onClick={() => setConfirmDeleteId(proyecto.id)}
-                      onBlur={() => setTimeout(() => setConfirmDeleteId(null), 200)}
                       className="py-3 lg:py-4 px-3 lg:px-4 bg-red-500/5 border border-red-500/20 text-red-500/60 text-[9px] lg:text-[10px] font-black rounded-xl lg:rounded-2xl hover:bg-red-500/10 hover:text-red-400 transition-all flex items-center justify-center"
                       title="Eliminar proyecto"
                     >

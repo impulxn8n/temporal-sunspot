@@ -415,7 +415,11 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   }, [addMovimiento]);
 
   const removeProyecto = useCallback((id: string) => {
-    setProyectos(prev => prev.filter(p => p.id !== id));
+    setProyectos(prev => {
+      const updated = prev.filter(p => p.id !== id);
+      saveData({ proyectos: updated });
+      return updated;
+    });
     db.proyectos.delete(id).catch(console.error);
   }, []);
 
