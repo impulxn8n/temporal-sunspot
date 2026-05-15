@@ -1,11 +1,10 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useMemo } from 'react';
 import type { Movimiento, ClienteMRR, Proyecto, Deuda, Presupuesto, Space, SpaceView, CuentaPorCobrar } from '../types';
-import { loadData } from '../lib/storage';
+import { loadData, saveData } from '../lib/storage';
 import { spaceIdToUnidad, unidadToSpaceId, SPACE_IDS, defaultSpaces } from '../lib/spaces';
 import { createFinanceSpreadsheet, updateSheetValues, getSpreadsheetIdByName, getSheetValues } from '../lib/googleSheets';
 import { calcularDistribucionCliente } from '../lib/clienteCalc';
 import { db } from '../lib/supabaseStorage';
-import { mockMovimientos, mockClientesMRR, mockDeudas, mockCuentasPorCobrar } from '../lib/mockData';
 
 export interface SpaceBalance {
   spaceId: string;
@@ -100,8 +99,15 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [selectedView, setSelectedView] = useState<SpaceView>('global');
   const [selectedPeriod, setSelectedPeriod] = useState<string>(new Date().toISOString().substring(0, 7));
 
+  // Respaldo automático a localStorage cada vez que cambia el estado
+  useEffect(() => { if (movimientos.length > 0) saveData({ movimientos }); }, [movimientos]);
+  useEffect(() => { if (proyectos.length > 0) saveData({ proyectos }); }, [proyectos]);
+  useEffect(() => { if (clientesMRR.length > 0) saveData({ clientesMRR }); }, [clientesMRR]);
+  useEffect(() => { if (deudas.length > 0) saveData({ deudas }); }, [deudas]);
+
   useEffect(() => {
     const bootstrap = async () => {
+      const local = loadData();
       try {
         const [movs, clients, projs, debts, budgets, cuentas] = await Promise.all([
           db.movimientos.load(),
@@ -112,55 +118,31 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
           db.cuentasPorCobrar.load(),
         ]);
 
-        // Si Supabase está vacío, sembrar con datos iniciales
-        if (movs.length === 0) {
-          await db.movimientos.upsert(mockMovimientos);
-          setMovimientos(mockMovimientos);
-        } else {
-          setMovimientos(movs);
-        }
+        // Si Supabase tiene datos úsalos; si no, usa localStorage (o mockData como último recurso)
+        setMovimientos(movs.length > 0 ? movs : local.movimientos);
+        if (movs.length === 0) db.movimientos.upsert(local.movimientos).catch(console.error);
 
-        if (clients.length === 0) {
-          for (const c of mockClientesMRR) await db.clientesMRR.upsert(c);
-          setClientesMRR(mockClientesMRR);
-        } else {
-          setClientesMRR(clients);
-        }
+        setClientesMRR(clients.length > 0 ? clients : local.clientesMRR);
+        if (clients.length === 0) local.clientesMRR.forEach((c: ClienteMRR) => db.clientesMRR.upsert(c).catch(console.error));
 
-        if (debts.length === 0) {
-          for (const d of mockDeudas) await db.deudas.upsert(d);
-          setDeudas(mockDeudas);
-        } else {
-          setDeudas(debts);
-        }
+        setDeudas(debts.length > 0 ? debts : local.deudas);
+        if (debts.length === 0) local.deudas.forEach((d: Deuda) => db.deudas.upsert(d).catch(console.error));
 
-        if (cuentas.length === 0) {
-          for (const c of mockCuentasPorCobrar) await db.cuentasPorCobrar.upsert(c);
-          setCuentasPorCobrar(mockCuentasPorCobrar);
-        } else {
-          setCuentasPorCobrar(cuentas);
-        }
+        setCuentasPorCobrar(cuentas.length > 0 ? cuentas : local.cuentasPorCobrar);
+        if (cuentas.length === 0) local.cuentasPorCobrar.forEach((c: CuentaPorCobrar) => db.cuentasPorCobrar.upsert(c).catch(console.error));
 
-        // Para proyectos: si Supabase está vacío, intentar recuperar de localStorage
-        if (projs.length === 0) {
-          const local = loadData();
-          if (local.proyectos.length > 0) {
-            setProyectos(local.proyectos);
-            for (const p of local.proyectos) await db.proyectos.upsert(p).catch(console.error);
-          }
-        } else {
-          setProyectos(projs);
-        }
+        setProyectos(projs.length > 0 ? projs : local.proyectos);
+        if (projs.length === 0) local.proyectos.forEach((p: Proyecto) => db.proyectos.upsert(p).catch(console.error));
+
         setPresupuestos(budgets);
       } catch (err) {
         console.error('[Bootstrap] Supabase failed, falling back to localStorage:', err);
-        const data = loadData();
-        setMovimientos(data.movimientos);
-        setClientesMRR(data.clientesMRR);
-        setProyectos(data.proyectos);
-        setDeudas(data.deudas);
-        setPresupuestos(data.presupuestos);
-        setCuentasPorCobrar(data.cuentasPorCobrar);
+        setMovimientos(local.movimientos);
+        setClientesMRR(local.clientesMRR);
+        setProyectos(local.proyectos);
+        setDeudas(local.deudas);
+        setPresupuestos(local.presupuestos);
+        setCuentasPorCobrar(local.cuentasPorCobrar);
       }
       setSpaces(defaultSpaces);
     };
