@@ -359,47 +359,38 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   }, []);
 
   const updateDebt = useCallback((debtId: string, paymentAmount: number) => {
-    let debtToUpdate: any = null;
+    const debt = deudas.find(d => d.id === debtId);
+    if (!debt) return;
 
-    setDeudas(prev => {
-      const debt = prev.find(d => d.id === debtId);
-      if (!debt) return prev;
+    const newPagado = debt.pagado + paymentAmount;
+    const updatedDebt = {
+      ...debt,
+      pagado: newPagado,
+      saldo_restante: debt.saldo_inicial - newPagado,
+      estado: (debt.saldo_inicial - newPagado <= 0) ? 'Liquidado' as const : 'Al día' as const,
+    };
 
-      const newPagado = debt.pagado + paymentAmount;
-      const updatedDebt = { 
-        ...debt, 
-        pagado: newPagado, 
-        saldo_restante: debt.saldo_inicial - newPagado,
-        estado: (debt.saldo_inicial - newPagado <= 0) ? 'Liquidado' as const : 'Al día' as const
-      };
-      debtToUpdate = updatedDebt;
+    setDeudas(prev => prev.map(d => d.id === debtId ? updatedDebt : d));
+    db.deudas.update(debtId, { pagado: updatedDebt.pagado, saldo_restante: updatedDebt.saldo_restante, estado: updatedDebt.estado }).catch(console.error);
 
-      const updated = prev.map(d => d.id === debtId ? updatedDebt : d);
-      db.deudas.update(debtId, { pagado: updatedDebt.pagado, saldo_restante: updatedDebt.saldo_restante, estado: updatedDebt.estado }).catch(console.error);
-      return updated;
-    });
-
-    // Registrar movimiento de gasto fuera del setter de estado
     if (paymentAmount > 0) {
-      setTimeout(() => {
-        addMovimiento({
-          fecha: new Date().toISOString().split('T')[0],
-          unidad: 'Personal',
-          tipo_movimiento: 'Gasto',
-          categoria: 'Deuda',
-          subcategoria: debtToUpdate?.tipo || 'Pago',
-          cliente_proveedor: debtToUpdate?.acreedor || 'Acreedor',
-          descripcion: `Pago cuota: ${debtToUpdate?.acreedor || ''}`,
-          metodo_pago: 'Transferencia',
-          monto: paymentAmount,
-          recurrente: false,
-          estado: 'Pagado',
-          impacto: 'Privado',
-          cuenta: 'Bancolombia'
-        });
-      }, 0);
+      addMovimiento({
+        fecha: new Date().toISOString().split('T')[0],
+        unidad: 'SM DIGITALS',
+        tipo_movimiento: 'Gasto',
+        categoria: 'Deuda',
+        subcategoria: debt.tipo,
+        cliente_proveedor: debt.acreedor,
+        descripcion: `Pago cuota: ${debt.acreedor}`,
+        metodo_pago: 'Transferencia',
+        monto: paymentAmount,
+        recurrente: false,
+        estado: 'Pagado',
+        impacto: 'Privado',
+        cuenta: 'Bancolombia',
+      });
     }
-  }, [addMovimiento]);
+  }, [deudas, addMovimiento]);
 
   const undoDebtPayment = useCallback((debtId: string, paymentAmount: number) => {
     setDeudas(prev => {
@@ -458,44 +449,39 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   }, []);
 
   const registrarPagoProyecto = useCallback((projectId: string, amount: number, method: string) => {
-    setProyectos(prev => {
-      const project = prev.find(p => p.id === projectId);
-      if (!project) return prev;
+    const project = proyectos.find(p => p.id === projectId);
+    if (!project) return;
 
-      const newCobrado = project.cobrado + amount;
-      const newPendiente = Math.max(0, project.valor_total - newCobrado);
+    const newCobrado = project.cobrado + amount;
+    const newPendiente = Math.max(0, project.valor_total - newCobrado);
 
-      const updatedProyectos = prev.map(p =>
-        p.id === projectId ? { ...p, cobrado: newCobrado, pendiente: newPendiente } : p
-      );
+    setProyectos(prev => prev.map(p =>
+      p.id === projectId ? { ...p, cobrado: newCobrado, pendiente: newPendiente } : p
+    ));
+    db.proyectos.update(projectId, { cobrado: newCobrado, pendiente: newPendiente }).catch(console.error);
 
-      const empresa = project.empresa ?? 'SM DIGITALS';
-      const spaceId = unidadToSpaceId(empresa);
-      const comisionPct = project.comision_pct ?? 100;
-      const ingresoReal = Math.round(amount * (comisionPct / 100));
+    const empresa = project.empresa ?? 'SM DIGITALS';
+    const comisionPct = project.comision_pct ?? 100;
+    const ingresoReal = Math.round(amount * (comisionPct / 100));
 
-      addMovimiento({
-        fecha: new Date().toISOString().split('T')[0],
-        unidad: empresa,
-        space_id: spaceId,
-        tipo_movimiento: 'Ingreso',
-        categoria: 'Proyecto',
-        subcategoria: project.tipo,
-        cliente_proveedor: project.cliente,
-        descripcion: `Pago Proyecto: ${project.nombre_proyecto} (${comisionPct}%)`,
-        metodo_pago: method,
-        monto: ingresoReal,
-        recurrente: false,
-        estado: 'Pagado',
-        impacto: 'Core',
-        cuenta: method === 'Transferencia' ? 'Bancolombia' : 'Billetera',
-        proyecto_id: projectId
-      });
-
-      db.proyectos.update(projectId, { cobrado: newCobrado, pendiente: newPendiente }).catch(console.error);
-      return updatedProyectos;
+    addMovimiento({
+      fecha: new Date().toISOString().split('T')[0],
+      unidad: empresa,
+      space_id: unidadToSpaceId(empresa),
+      tipo_movimiento: 'Ingreso',
+      categoria: 'Proyecto',
+      subcategoria: project.tipo,
+      cliente_proveedor: project.cliente,
+      descripcion: `Pago Proyecto: ${project.nombre_proyecto} (${comisionPct}%)`,
+      metodo_pago: method,
+      monto: ingresoReal,
+      recurrente: false,
+      estado: 'Pagado',
+      impacto: 'Core',
+      cuenta: method === 'Transferencia' ? 'Bancolombia' : 'Billetera',
+      proyecto_id: projectId,
     });
-  }, [addMovimiento]);
+  }, [proyectos, addMovimiento]);
 
   const periods = useMemo(() => {
     const p = Array.from(new Set(movimientos.map(m => m.periodo || m.fecha.substring(0, 7)))).sort().reverse();
