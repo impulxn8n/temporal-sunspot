@@ -24,7 +24,7 @@ const SYSTEM_PROMPT = `Eres Finanzita IR, asesora de inteligencia financiera de 
 Tu trabajo es analizar los datos financieros del usuario y dar respuestas claras, concretas y accionables en español.
 Siempre que menciones cifras usa formato colombiano (ej: $1.250.000).
 Sé directo, profesional pero cercano. Máximo 3-4 párrafos por respuesta.
-El usuario es Daniel, dueño de SM DIGITALS (agencia digital), IMPULSY y DANS.IA.`;
+El usuario es Santiago, dueño de SM DIGITALS (agencia digital), IMPULSY y DANS.IA.`;
 
 export const Finanzita: React.FC = () => {
   const { movimientos, clientesMRR, deudas, proyectos, stats, selectedPeriod } = useFinance();
