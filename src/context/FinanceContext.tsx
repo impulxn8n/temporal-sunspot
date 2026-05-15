@@ -256,65 +256,59 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   }, []);
 
   const registerMRRPayment = useCallback((clienteId: string, shouldDistribute: boolean = true) => {
-    setClientesMRR(prev => {
-      const cliente = prev.find(c => c.id === clienteId);
-      if (!cliente) return prev;
+    const cliente = clientesMRR.find(c => c.id === clienteId);
+    if (!cliente) return;
 
-      const today = new Date().toISOString().split('T')[0];
+    const today = new Date().toISOString().split('T')[0];
 
-      // Crear ingreso principal a SM DIGITALS
-      addMovimiento({
-        fecha: today,
-        unidad: 'SM DIGITALS',
-        tipo_movimiento: 'Ingreso',
-        categoria: 'MRR',
-        subcategoria: cliente.servicio,
-        cliente_proveedor: cliente.cliente,
-        descripcion: `Cobro: ${cliente.cliente} - ${cliente.servicio}`,
-        metodo_pago: cliente.metodo_pago,
-        monto: cliente.valor_mensual,
-        recurrente: false,
-        estado: 'Pagado',
-        impacto: 'Core',
-        cuenta: cliente.metodo_pago === 'Transferencia' ? 'Bancolombia' : 'Billetera',
-      });
+    addMovimiento({
+      fecha: today,
+      unidad: 'SM DIGITALS',
+      tipo_movimiento: 'Ingreso',
+      categoria: 'MRR',
+      subcategoria: cliente.servicio,
+      cliente_proveedor: cliente.cliente,
+      descripcion: `Cobro: ${cliente.cliente} - ${cliente.servicio}`,
+      metodo_pago: cliente.metodo_pago,
+      monto: cliente.valor_mensual,
+      recurrente: false,
+      estado: 'Pagado',
+      impacto: 'Core',
+      cuenta: cliente.metodo_pago === 'Transferencia' ? 'Bancolombia' : 'Billetera',
+    });
 
-      // Transferencias a bolsillos solo si shouldDistribute es true
-      if (shouldDistribute) {
-        const distribucion = calcularDistribucionCliente(cliente);
+    if (shouldDistribute) {
+      const distribucion = calcularDistribucionCliente(cliente);
 
-        if (distribucion.costoOperativo > 0) {
-          setTimeout(() => {
-            addTransferencia({
-              fromSpaceId: SPACE_IDS.BUSINESS,
-              toSpaceId: SPACE_IDS.BOLS_OPERATIVO,
-              monto: distribucion.costoOperativo,
-              fecha: today,
-              descripcion: `Costos: ${cliente.cliente}`,
-              metodoPago: 'Interna',
-              cuenta: 'Interna',
-            });
-          }, 50);
-        }
-
-        if (distribucion.ahorro > 0) {
-          setTimeout(() => {
-            addTransferencia({
-              fromSpaceId: SPACE_IDS.BUSINESS,
-              toSpaceId: SPACE_IDS.BOLS_EMERGENCIA,
-              monto: distribucion.ahorro,
-              fecha: today,
-              descripcion: `Emergencia: ${cliente.cliente}`,
-              metodoPago: 'Interna',
-              cuenta: 'Interna',
-            });
-          }, 100);
-        }
+      if (distribucion.costoOperativo > 0) {
+        setTimeout(() => {
+          addTransferencia({
+            fromSpaceId: SPACE_IDS.BUSINESS,
+            toSpaceId: SPACE_IDS.BOLS_OPERATIVO,
+            monto: distribucion.costoOperativo,
+            fecha: today,
+            descripcion: `Costos: ${cliente.cliente}`,
+            metodoPago: 'Interna',
+            cuenta: 'Interna',
+          });
+        }, 50);
       }
 
-      return prev;
-    });
-  }, [addMovimiento, addTransferencia]);
+      if (distribucion.ahorro > 0) {
+        setTimeout(() => {
+          addTransferencia({
+            fromSpaceId: SPACE_IDS.BUSINESS,
+            toSpaceId: SPACE_IDS.BOLS_EMERGENCIA,
+            monto: distribucion.ahorro,
+            fecha: today,
+            descripcion: `Emergencia: ${cliente.cliente}`,
+            metodoPago: 'Interna',
+            cuenta: 'Interna',
+          });
+        }, 100);
+      }
+    }
+  }, [clientesMRR, addMovimiento, addTransferencia]);
 
   const addCuentaPorCobrar = useCallback((cuenta: Omit<CuentaPorCobrar, 'id' | 'created_at'>) => {
     const newCuenta: CuentaPorCobrar = { ...cuenta, id: crypto.randomUUID(), created_at: new Date().toISOString() };
