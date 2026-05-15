@@ -1,10 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useFinance } from '../context/FinanceContext';
-import { Send, User, TrendingUp, AlertCircle, Loader2, Settings } from 'lucide-react';
+import { Send, User, TrendingUp, Loader2 } from 'lucide-react';
 
-// --- CONFIG ---
-// Paste your n8n webhook URL here
-const N8N_WEBHOOK_URL = localStorage.getItem('finanzita_webhook_url') || '';
+const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY as string;
 
 interface Message {
   id: string;
@@ -22,28 +20,30 @@ const QUICK_PROMPTS = [
   '¿Cuándo podría pagar toda mi deuda?',
 ];
 
+const SYSTEM_PROMPT = `Eres Finanzita IR, asesora de inteligencia financiera de la plataforma SM DIGITALS.
+Tu trabajo es analizar los datos financieros del usuario y dar respuestas claras, concretas y accionables en español.
+Siempre que menciones cifras usa formato colombiano (ej: $1.250.000).
+Sé directo, profesional pero cercano. Máximo 3-4 párrafos por respuesta.
+El usuario es Daniel, dueño de SM DIGITALS (agencia digital), IMPULSY y DANS.IA.`;
+
 export const Finanzita: React.FC = () => {
   const { movimientos, clientesMRR, deudas, proyectos, stats, selectedPeriod } = useFinance();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '0',
       role: 'assistant',
-      content: '¡Hola! Soy **Finanzita IR**, tu asesora de inteligencia financiera en la plataforma **SM DIGITALS**. 🚀\n\nAnalizo tus movimientos, clientes, deudas y proyectos en tiempo real. ¿En qué puedo ayudarte hoy?',
+      content: '¡Hola Daniel! Soy **Finanzita IR**, tu asesora de inteligencia financiera. 🚀\n\nAnalizo tus movimientos, clientes, deudas y proyectos en tiempo real. ¿En qué puedo ayudarte hoy?',
       timestamp: new Date(),
     }
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [webhookUrl, setWebhookUrl] = useState(N8N_WEBHOOK_URL);
-  const [showSettings, setShowSettings] = useState(false);
-  const [tempWebhook, setTempWebhook] = useState(webhookUrl);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Build a compact financial context to send to n8n
   const buildContext = () => {
     const currentMovimientos = movimientos.filter(m => m.periodo === selectedPeriod);
     const mrrActivo = clientesMRR.filter(c => c.estado === 'Activo');
@@ -52,46 +52,30 @@ export const Finanzita: React.FC = () => {
     const ingresosMes = currentMovimientos.filter(m => m.tipo_movimiento === 'Ingreso').reduce((s, m) => s + m.monto, 0);
     const gastosMes = currentMovimientos.filter(m => m.tipo_movimiento === 'Gasto').reduce((s, m) => s + m.monto, 0);
 
-    return {
-      periodo_actual: selectedPeriod,
-      resumen_financiero: {
-        mrr_total: totalMRR,
-        deuda_total: totalDeuda,
-        ingresos_periodo: ingresosMes,
-        gastos_periodo: gastosMes,
-        utilidad_periodo: ingresosMes - gastosMes,
-        total_ingresos_historico: stats.totalIncome,
-        total_gastos_historico: stats.totalExpenses,
-      },
-      ingresos_mrr: mrrActivo.map(c => ({
-        nombre: c.cliente,
-        valor: c.valor_mensual,
-        dia_cobro: c.dia_cobro,
-        estado: c.estado,
-      })),
-      deudas: deudas.map(d => ({
-        acreedor: d.acreedor,
-        saldo_restante: d.saldo_restante,
-        cuota_mensual: d.cuota_mensual,
-        saldo_inicial: d.saldo_inicial,
-        estado: d.estado,
-      })),
-      proyectos_activos: proyectos.filter(p => p.estado === 'En Proceso').map(p => ({
-        nombre: p.nombre_proyecto,
-        cliente: p.cliente,
-        pendiente: p.pendiente,
-        cobrado: p.cobrado,
-        valor_total: p.valor_total,
-        fase: p.fase,
-      })),
-      ultimos_movimientos: currentMovimientos.slice(-20).map(m => ({
-        fecha: m.fecha,
-        tipo: m.tipo_movimiento,
-        categoria: m.categoria,
-        monto: m.monto,
-        descripcion: m.cliente_proveedor,
-      })),
-    };
+    return `
+PERÍODO ACTUAL: ${selectedPeriod}
+
+RESUMEN FINANCIERO:
+- MRR total: $${totalMRR.toLocaleString('es-CO')}
+- Ingresos del período: $${ingresosMes.toLocaleString('es-CO')}
+- Gastos del período: $${gastosMes.toLocaleString('es-CO')}
+- Utilidad del período: $${(ingresosMes - gastosMes).toLocaleString('es-CO')}
+- Total ingresos histórico: $${stats.totalIncome.toLocaleString('es-CO')}
+- Total gastos histórico: $${stats.totalExpenses.toLocaleString('es-CO')}
+- Deuda total: $${totalDeuda.toLocaleString('es-CO')}
+
+CLIENTES MRR ACTIVOS:
+${mrrActivo.map(c => `- ${c.cliente}: $${c.valor_mensual.toLocaleString('es-CO')}/mes (${c.servicio})`).join('\n')}
+
+DEUDAS:
+${deudas.map(d => `- ${d.acreedor}: saldo $${d.saldo_restante.toLocaleString('es-CO')}, cuota $${d.cuota_mensual.toLocaleString('es-CO')}/mes`).join('\n')}
+
+PROYECTOS ACTIVOS:
+${proyectos.filter(p => p.estado === 'En Proceso').map(p => `- ${p.nombre_proyecto} (${p.cliente}): total $${p.valor_total.toLocaleString('es-CO')}, cobrado $${p.cobrado.toLocaleString('es-CO')}, pendiente $${p.pendiente.toLocaleString('es-CO')}`).join('\n')}
+
+ÚLTIMOS MOVIMIENTOS DEL PERÍODO:
+${currentMovimientos.slice(-15).map(m => `- ${m.fecha} | ${m.tipo_movimiento} | ${m.cliente_proveedor} | $${m.monto.toLocaleString('es-CO')}`).join('\n')}
+`.trim();
   };
 
   const sendMessage = async (text: string) => {
@@ -110,36 +94,32 @@ export const Finanzita: React.FC = () => {
 
     try {
       const context = buildContext();
-      const url = webhookUrl || tempWebhook;
 
-      if (!url) {
-        throw new Error('NO_WEBHOOK');
-      }
-
-      const response = await fetch(url, {
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${OPENAI_API_KEY}`,
+        },
         body: JSON.stringify({
-          pregunta: text,
-          contexto_financiero: context,
-          historial: messages.slice(-6).map(m => ({
-            rol: m.role,
-            mensaje: m.content,
-          })),
+          model: 'gpt-4o-mini',
+          messages: [
+            { role: 'system', content: `${SYSTEM_PROMPT}\n\nDAtos financieros actuales del usuario:\n${context}` },
+            ...messages.slice(-8).map(m => ({ role: m.role, content: m.content })),
+            { role: 'user', content: text },
+          ],
+          max_tokens: 600,
+          temperature: 0.7,
         }),
       });
 
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error?.message || `HTTP ${response.status}`);
+      }
 
       const data = await response.json();
-      // Support both { respuesta: "..." } and { output: "..." } and plain string
-      const respuesta =
-        data?.respuesta ||
-        data?.output ||
-        data?.message ||
-        data?.text ||
-        (typeof data === 'string' ? data : null) ||
-        '⚠️ No pude obtener una respuesta. Revisa el formato de respuesta de tu workflow en n8n.';
+      const respuesta = data.choices?.[0]?.message?.content || 'No pude obtener respuesta.';
 
       setMessages(prev => [...prev, {
         id: crypto.randomUUID(),
@@ -149,33 +129,15 @@ export const Finanzita: React.FC = () => {
       }]);
 
     } catch (err: any) {
-      let errorMsg = '';
-      if (err.message === 'NO_WEBHOOK') {
-        errorMsg = '⚙️ **Configura el webhook de n8n** primero. Haz clic en el ícono de ajustes (⚙️) arriba a la derecha y pega la URL de tu webhook de n8n para activarme.';
-      } else {
-        errorMsg = `❌ Error conectando con n8n: ${err.message}\n\nVerifica que tu workflow esté activo y la URL sea correcta.`;
-      }
       setMessages(prev => [...prev, {
         id: crypto.randomUUID(),
         role: 'assistant',
-        content: errorMsg,
+        content: `❌ Error: ${err.message}`,
         timestamp: new Date(),
       }]);
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const saveWebhook = () => {
-    localStorage.setItem('finanzita_webhook_url', tempWebhook);
-    setWebhookUrl(tempWebhook);
-    setShowSettings(false);
-    setMessages(prev => [...prev, {
-      id: crypto.randomUUID(),
-      role: 'assistant',
-      content: '✅ ¡Webhook configurado! Ya estoy conectada a tu workflow de n8n. Puedes hacerme cualquier pregunta sobre tus finanzas.',
-      timestamp: new Date(),
-    }]);
   };
 
   const formatMessage = (text: string) => {
@@ -198,43 +160,10 @@ export const Finanzita: React.FC = () => {
           </div>
           <div>
             <h2 className="text-2xl lg:text-3xl font-black text-white tracking-tighter">Finanzita IR</h2>
-            <p className="text-[8px] lg:text-[10px] text-brand-primary font-black uppercase tracking-[0.2em]">SM DIGITALS Intelligence · En línea</p>
+            <p className="text-[8px] lg:text-[10px] text-brand-primary font-black uppercase tracking-[0.2em]">SM DIGITALS Intelligence · GPT-4o mini</p>
           </div>
         </div>
-        <button
-          onClick={() => { setShowSettings(!showSettings); setTempWebhook(webhookUrl); }}
-          className="glass-card p-2.5 lg:p-3 rounded-xl text-slate-500 hover:text-white hover:border-brand-income/30 transition-all shadow-xl"
-          title="Configurar webhook n8n"
-        >
-          <Settings size={18} />
-        </button>
       </div>
-
-      {/* Settings Panel */}
-      {showSettings && (
-        <div className="glass-card rounded-[24px] lg:rounded-3xl p-5 lg:p-6 mb-4 flex-shrink-0 space-y-4 shadow-2xl border-brand-primary/20">
-          <div className="flex items-center gap-2 mb-2">
-            <AlertCircle size={16} className="text-brand-primary" />
-            <p className="text-[9px] lg:text-[11px] font-black text-brand-primary uppercase tracking-widest">Configuración Webhook n8n</p>
-          </div>
-          <p className="text-[11px] lg:text-xs text-slate-500 max-w-lg">Pega la URL del nodo "Webhook" de tu workflow en n8n. El agente enviará el contexto financiero completo.</p>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <input
-              type="url"
-              value={tempWebhook}
-              onChange={e => setTempWebhook(e.target.value)}
-              placeholder="https://tu-n8n.app.n8n.cloud/webhook/finanzita"
-              className="flex-1 bg-[#050508] border border-white/5 rounded-xl px-4 py-3 text-xs lg:text-sm text-white placeholder-slate-600 focus:outline-none focus:border-brand-primary/50"
-            />
-            <button
-              onClick={saveWebhook}
-              className="bg-brand-primary hover:bg-brand-primary/80 text-white font-black px-6 py-3 rounded-xl transition-all text-xs lg:text-sm active:scale-95 shadow-xl shadow-brand-primary/20"
-            >
-              Guardar Webhook
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* KPI Bar */}
       <div className="flex gap-3 mb-4 flex-shrink-0 overflow-x-auto no-scrollbar pb-2">
@@ -324,7 +253,7 @@ export const Finanzita: React.FC = () => {
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendMessage(input)}
-          placeholder="Pregúntale a SM Inteligencia..."
+          placeholder="Pregúntale a Finanzita IR..."
           disabled={isLoading}
           className="flex-1 bg-[#050508] border border-white/5 focus:border-brand-primary/50 rounded-xl lg:rounded-2xl px-4 lg:px-6 py-3.5 lg:py-4 text-[13px] lg:text-sm text-white placeholder-slate-600 focus:outline-none transition-all disabled:opacity-50"
         />
