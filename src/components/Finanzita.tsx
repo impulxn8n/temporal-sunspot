@@ -32,7 +32,7 @@ export const Finanzita: React.FC = () => {
     {
       id: '0',
       role: 'assistant',
-      content: '¡Hola Daniel! Soy **Finanzita IR**, tu asesora de inteligencia financiera. 🚀\n\nAnalizo tus movimientos, clientes, deudas y proyectos en tiempo real. ¿En qué puedo ayudarte hoy?',
+      content: '¡Hola Santiago! Soy **Finanzita IR**, tu asesora de inteligencia financiera. 🚀\n\nAnalizo tus movimientos, clientes, deudas y proyectos en tiempo real. ¿En qué puedo ayudarte hoy?',
       timestamp: new Date(),
     }
   ]);
