@@ -15,6 +15,7 @@ export const Proyectos: React.FC = () => {
   const { isConnected, accessToken } = useGoogleAuth();
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncingProjectId, setSyncingProjectId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [numCuotas, setNumCuotas] = useState(1);
   const [selectedProject, setSelectedProject] = useState<Proyecto | null>(null);
   const [paymentAmount, setPaymentAmount] = useState<number>(0);
@@ -410,17 +411,23 @@ export const Proyectos: React.FC = () => {
                   >
                     <Edit2 size={14} />
                   </button>
-                  <button
-                    onClick={() => {
-                      if (window.confirm(`¿Eliminar el proyecto "${proyecto.nombre_proyecto}"?`)) {
-                        removeProyecto(proyecto.id);
-                      }
-                    }}
-                    className="py-3 lg:py-4 px-3 lg:px-4 bg-red-500/5 border border-red-500/20 text-red-500/60 text-[9px] lg:text-[10px] font-black rounded-xl lg:rounded-2xl hover:bg-red-500/10 hover:text-red-400 transition-all flex items-center justify-center"
-                    title="Eliminar proyecto"
-                  >
-                    <Trash2 size={14} />
-                  </button>
+                  {confirmDeleteId === proyecto.id ? (
+                    <button
+                      onClick={() => { removeProyecto(proyecto.id); setConfirmDeleteId(null); }}
+                      className="py-3 lg:py-4 px-3 lg:px-4 bg-red-500 text-white text-[9px] lg:text-[10px] font-black rounded-xl lg:rounded-2xl transition-all flex items-center justify-center gap-1"
+                    >
+                      <Trash2 size={13} /> ¿Sí?
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => setConfirmDeleteId(proyecto.id)}
+                      onBlur={() => setTimeout(() => setConfirmDeleteId(null), 200)}
+                      className="py-3 lg:py-4 px-3 lg:px-4 bg-red-500/5 border border-red-500/20 text-red-500/60 text-[9px] lg:text-[10px] font-black rounded-xl lg:rounded-2xl hover:bg-red-500/10 hover:text-red-400 transition-all flex items-center justify-center"
+                      title="Eliminar proyecto"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  )}
                   {isConnected && (
                     <button
                       onClick={() => handleSyncExistingToCalendar(proyecto)}
