@@ -81,7 +81,7 @@ export const TransactionsList: React.FC = () => {
                               removeMovimiento(mov.id);
                             }
                           }}
-                          className="opacity-0 group-hover:opacity-100 p-2 rounded-xl text-slate-600 hover:text-red-400 hover:bg-red-400/10 transition-all"
+                          className="opacity-100 text-slate-500 lg:opacity-0 lg:group-hover:opacity-100 p-2 rounded-xl hover:text-red-400 hover:bg-red-400/10 transition-all"
                           title="Eliminar movimiento"
                         >
                           <Trash2 size={14} />
