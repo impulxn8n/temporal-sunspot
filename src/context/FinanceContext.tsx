@@ -461,7 +461,53 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       cuenta: method === 'Transferencia' ? 'Bancolombia' : 'Billetera',
       proyecto_id: projectId,
     });
-  }, [proyectos, addMovimiento]);
+
+    const dateStr = new Date().toISOString().split('T')[0];
+    const baseSpaceId = unidadToSpaceId(empresa);
+    const ahorro = Math.round(ingresoReal * 0.40);
+    const personal = Math.round(ingresoReal * 0.30);
+    const operativo = Math.round(ingresoReal * 0.20);
+
+    if (ahorro > 0) {
+      setTimeout(() => {
+        addTransferencia({
+          fromSpaceId: baseSpaceId,
+          toSpaceId: SPACE_IDS.BOLS_EMERGENCIA,
+          monto: ahorro,
+          fecha: dateStr,
+          descripcion: `Ahorro/Inversión (40%): ${project.nombre_proyecto}`,
+          metodoPago: 'Interna',
+          cuenta: 'Interna',
+        });
+      }, 50);
+    }
+    if (personal > 0) {
+      setTimeout(() => {
+        addTransferencia({
+          fromSpaceId: baseSpaceId,
+          toSpaceId: SPACE_IDS.PERSONAL,
+          monto: personal,
+          fecha: dateStr,
+          descripcion: `Sueldo/Personal (30%): ${project.nombre_proyecto}`,
+          metodoPago: 'Interna',
+          cuenta: 'Interna',
+        });
+      }, 100);
+    }
+    if (operativo > 0) {
+      setTimeout(() => {
+        addTransferencia({
+          fromSpaceId: baseSpaceId,
+          toSpaceId: SPACE_IDS.BOLS_OPERATIVO,
+          monto: operativo,
+          fecha: dateStr,
+          descripcion: `Costos (20%): ${project.nombre_proyecto}`,
+          metodoPago: 'Interna',
+          cuenta: 'Interna',
+        });
+      }, 150);
+    }
+  }, [proyectos, addMovimiento, addTransferencia]);
 
   const periods = useMemo(() => {
     const p = Array.from(new Set(movimientos.map(m => m.periodo || m.fecha.substring(0, 7)))).sort().reverse();
