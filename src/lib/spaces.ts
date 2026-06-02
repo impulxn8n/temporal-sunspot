@@ -67,7 +67,10 @@ export const unidadToSpaceId = (unidad: Unidad): string => {
 
 export const spaceIdToUnidad = (spaceId: string): Unidad => {
   switch (spaceId) {
-    case SPACE_IDS.BUSINESS:      return 'SM DIGITALS';
+    case SPACE_IDS.BUSINESS:
+    case SPACE_IDS.BOLS_EMERGENCIA:
+    case SPACE_IDS.BOLS_OPERATIVO:
+      return 'SM DIGITALS';
     case SPACE_IDS.IMPULSY:       return 'IMPULSY';
     case SPACE_IDS.DANSAI:        return 'DANS.IA';
     default:                      return 'Personal';
@@ -79,3 +82,4 @@ export const migrateMovimientoSpace = (m: Movimiento): Movimiento => {
   if (m.space_id) return m;
   return { ...m, space_id: unidadToSpaceId(m.unidad) };
 };
+
