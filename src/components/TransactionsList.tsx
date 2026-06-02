@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { useFinance } from '../hooks/useFinance';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -13,7 +13,7 @@ export const TransactionsList: React.FC = () => {
       <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div>
           <h2 className="text-3xl lg:text-4xl font-black text-white tracking-tighter">Libro de Filtros</h2>
-          <p className="text-brand-gold font-bold uppercase tracking-[0.2em] text-[8px] lg:text-[10px] mt-1">Auditoría centralizada de flujo de capital</p>
+          <p className="text-brand-gold font-bold uppercase tracking-[0.2em] text-[8px] lg:text-[10px] mt-1">AuditorÃ­a centralizada de flujo de capital</p>
         </div>
         <div className="bg-[#0a0a0f] border border-white/5 p-2 rounded-2xl flex items-center shadow-2xl">
           <PeriodSelector />
@@ -23,7 +23,7 @@ export const TransactionsList: React.FC = () => {
       <div className="glass-card rounded-[32px] lg:rounded-[40px] overflow-hidden shadow-2xl relative shadow-black/40">
         <div className="p-6 lg:p-8 border-b border-white/5 bg-black/20 flex items-center gap-4">
           <Search className="text-slate-600" size={18} />
-          <input type="text" placeholder="BUSCAR TRANSACCIÓN..." className="bg-transparent border-none outline-none text-[10px] lg:text-xs font-black tracking-widest text-white w-full placeholder:text-slate-700" />
+          <input type="text" placeholder="BUSCAR TRANSACCIÃ“N..." className="bg-transparent border-none outline-none text-[10px] lg:text-xs font-black tracking-widest text-white w-full placeholder:text-slate-700" />
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
@@ -39,7 +39,7 @@ export const TransactionsList: React.FC = () => {
             <tbody className="divide-y divide-white/5">
               {filteredMovimientos.length > 0 ? (
                 filteredMovimientos.sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime()).map((mov) => {
-                  const isIncome = mov.tipo_movimiento === 'Ingreso';
+                  const isIncome = mov.tipo_movimiento === 'Ingreso' || (mov.tipo_movimiento === 'Transferencia' && mov.subcategoria === 'Entrada');
                   return (
                     <tr key={mov.id} className="hover:bg-white/[0.02] transition-colors group">
                       <td className="px-6 lg:px-8 py-4 lg:py-6 whitespace-nowrap text-[10px] lg:text-[11px] text-slate-500 font-black uppercase tracking-tighter">
@@ -77,7 +77,7 @@ export const TransactionsList: React.FC = () => {
                       <td className="px-4 lg:px-6 py-4 lg:py-6">
                         <button
                           onClick={() => {
-                            if (window.confirm(`¿Eliminar movimiento de $${mov.monto.toLocaleString('es-CO')} (${mov.cliente_proveedor})?`)) {
+                            if (window.confirm(`Â¿Eliminar movimiento de $${mov.monto.toLocaleString('es-CO')} (${mov.cliente_proveedor})?`)) {
                               removeMovimiento(mov.id);
                             }
                           }}
@@ -110,3 +110,4 @@ export const TransactionsList: React.FC = () => {
     </div>
   );
 };
+
