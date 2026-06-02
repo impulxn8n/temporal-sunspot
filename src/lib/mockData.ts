@@ -1,4 +1,4 @@
-import type { Movimiento, ClienteMRR, Proyecto, Deuda, Presupuesto, CuentaPorCobrar } from '../types';
+﻿import type { Movimiento, ClienteMRR, Proyecto, Deuda, Presupuesto, CuentaPorCobrar } from '../types';
 
 // App arranca desde abril 2026.
 export const mockProyectos: Proyecto[] = [];
@@ -9,7 +9,7 @@ export const mockSaldoInicial: Movimiento = {
   id: 'saldo_inicial_smdigitals',
   fecha: '2026-04-01',
   periodo: '2026-04',
-  año: 2026,
+  aÃ±o: 2026,
   mes: 4,
   unidad: 'SM DIGITALS',
   space_id: 'sp_smdigitals',
@@ -62,14 +62,14 @@ export const mockCuentasPorCobrar: CuentaPorCobrar[] = [
 ];
 
 // Gastos fijos recurrentes de abril 2026.
-// Marcados como recurrente=true para que la proyección los detecte como plantillas mensuales.
+// Marcados como recurrente=true para que la proyecciÃ³n los detecte como plantillas mensuales.
 export const mockMovimientos: Movimiento[] = [
   mockSaldoInicial,
   {
     id: 'gf_oficina_abr',
     fecha: '2026-04-01',
     periodo: '2026-04',
-    año: 2026,
+    aÃ±o: 2026,
     mes: 4,
     unidad: 'SM DIGITALS',
     space_id: 'sp_smdigitals',
@@ -90,7 +90,7 @@ export const mockMovimientos: Movimiento[] = [
     id: 'gf_internet_abr',
     fecha: '2026-04-01',
     periodo: '2026-04',
-    año: 2026,
+    aÃ±o: 2026,
     mes: 4,
     unidad: 'SM DIGITALS',
     space_id: 'sp_smdigitals',
@@ -111,15 +111,15 @@ export const mockMovimientos: Movimiento[] = [
     id: 'gf_servicios_abr',
     fecha: '2026-04-01',
     periodo: '2026-04',
-    año: 2026,
+    aÃ±o: 2026,
     mes: 4,
     unidad: 'SM DIGITALS',
     space_id: 'sp_smdigitals',
     tipo_movimiento: 'Gasto',
     categoria: 'Operativos',
-    subcategoria: 'Servicios públicos',
+    subcategoria: 'Servicios pÃºblicos',
     cliente_proveedor: 'EPM',
-    descripcion: 'Servicios públicos',
+    descripcion: 'Servicios pÃºblicos',
     metodo_pago: 'Transferencia',
     monto: 150_000,
     recurrente: true,
@@ -132,14 +132,14 @@ export const mockMovimientos: Movimiento[] = [
     id: 'gf_barberia_abr',
     fecha: '2026-04-20',
     periodo: '2026-04',
-    año: 2026,
+    aÃ±o: 2026,
     mes: 4,
     unidad: 'Personal',
     space_id: 'sp_personal',
     tipo_movimiento: 'Gasto',
     categoria: 'Bienestar',
-    subcategoria: 'Barbería',
-    cliente_proveedor: 'Barbería',
+    subcategoria: 'BarberÃ­a',
+    cliente_proveedor: 'BarberÃ­a',
     descripcion: 'Corte mensual',
     metodo_pago: 'Efectivo',
     monto: 100_000,
@@ -153,7 +153,7 @@ export const mockMovimientos: Movimiento[] = [
       id: 'may_gasto_comidas',
       fecha: '2026-05-15',
       periodo: '2026-05',
-      año: 2026,
+      aÃ±o: 2026,
       mes: 5,
       unidad: 'Personal',
       space_id: 'sp_personal',
@@ -174,7 +174,7 @@ export const mockMovimientos: Movimiento[] = [
       id: 'may_gasto_transporte',
       fecha: '2026-05-15',
       periodo: '2026-05',
-      año: 2026,
+      aÃ±o: 2026,
       mes: 5,
       unidad: 'Personal',
       space_id: 'sp_personal',
@@ -195,7 +195,7 @@ export const mockMovimientos: Movimiento[] = [
       id: 'may_gasto_gym',
       fecha: '2026-05-05',
       periodo: '2026-05',
-      año: 2026,
+      aÃ±o: 2026,
       mes: 5,
       unidad: 'Personal',
       space_id: 'sp_personal',
@@ -216,15 +216,15 @@ export const mockMovimientos: Movimiento[] = [
       id: 'may_gasto_tarjeta',
       fecha: '2026-05-20',
       periodo: '2026-05',
-      año: 2026,
+      aÃ±o: 2026,
       mes: 5,
-      unidad: 'Marca Personal',
+      unidad: 'Personal',
       space_id: 'sp_marcapersonal',
       tipo_movimiento: 'Gasto',
       categoria: 'Deuda',
-      subcategoria: 'Tarjeta de crédito',
+      subcategoria: 'Tarjeta de crÃ©dito',
       cliente_proveedor: 'Banco',
-      descripcion: 'Tarjeta de crédito',
+      descripcion: 'Tarjeta de crÃ©dito',
       metodo_pago: 'Transferencia',
       monto: 48000,
       recurrente: false,
@@ -237,7 +237,7 @@ export const mockMovimientos: Movimiento[] = [
       id: 'may_gasto_moto',
       fecha: '2026-05-10',
       periodo: '2026-05',
-      año: 2026,
+      aÃ±o: 2026,
       mes: 5,
       unidad: 'Personal',
       space_id: 'sp_personal',
@@ -245,7 +245,7 @@ export const mockMovimientos: Movimiento[] = [
       categoria: 'Transporte',
       subcategoria: 'Moto',
       cliente_proveedor: 'Taller',
-      descripcion: 'Moto/Batería',
+      descripcion: 'Moto/BaterÃ­a',
       metodo_pago: 'Efectivo',
       monto: 100000,
       recurrente: false,
@@ -258,7 +258,7 @@ export const mockMovimientos: Movimiento[] = [
       id: 'may_gasto_vino',
       fecha: '2026-05-12',
       periodo: '2026-05',
-      año: 2026,
+      aÃ±o: 2026,
       mes: 5,
       unidad: 'Personal',
       space_id: 'sp_personal',
@@ -279,7 +279,7 @@ export const mockMovimientos: Movimiento[] = [
       id: 'may_gasto_pastillas',
       fecha: '2026-05-15',
       periodo: '2026-05',
-      año: 2026,
+      aÃ±o: 2026,
       mes: 5,
       unidad: 'Personal',
       space_id: 'sp_personal',
@@ -300,7 +300,7 @@ export const mockMovimientos: Movimiento[] = [
       id: 'may_gasto_potenciador',
       fecha: '2026-05-15',
       periodo: '2026-05',
-      año: 2026,
+      aÃ±o: 2026,
       mes: 5,
       unidad: 'Personal',
       space_id: 'sp_personal',
@@ -321,7 +321,7 @@ export const mockMovimientos: Movimiento[] = [
       id: 'may_gasto_elecciones',
       fecha: '2026-05-25',
       periodo: '2026-05',
-      año: 2026,
+      aÃ±o: 2026,
       mes: 5,
       unidad: 'Personal',
       space_id: 'sp_personal',
@@ -342,56 +342,56 @@ export const mockMovimientos: Movimiento[] = [
 ];
 
 // Deudas activas con sus cuotas mensuales.
-// fecha_pago = día del mes en que se debe pagar la cuota (puedes editarlo en la app).
-// El préstamo de $4.100.000 viene sin cuota — ajustar cuando definas el plan.
+// fecha_pago = dÃ­a del mes en que se debe pagar la cuota (puedes editarlo en la app).
+// El prÃ©stamo de $4.100.000 viene sin cuota â€” ajustar cuando definas el plan.
 export const mockDeudas: Deuda[] = [
   {
     id: 'deuda_victor',
-    acreedor: 'Víctor',
-    tipo: 'Préstamo personal',
+    acreedor: 'VÃ­ctor',
+    tipo: 'PrÃ©stamo personal',
     saldo_inicial: 15_660_000,
     cuota_mensual: 500_000,
     pagado: 0,
     saldo_restante: 15_660_000,
     fecha_pago: '15',
-    estado: 'Al día',
+    estado: 'Al dÃ­a',
   },
   {
     id: 'deuda_credito_grande',
-    acreedor: 'Banco - Crédito grande',
-    tipo: 'Crédito bancario',
+    acreedor: 'Banco - CrÃ©dito grande',
+    tipo: 'CrÃ©dito bancario',
     saldo_inicial: 28_786_385,
     cuota_mensual: 785_000,
     pagado: 0,
     saldo_restante: 28_786_385,
     fecha_pago: '30',
-    estado: 'Al día',
+    estado: 'Al dÃ­a',
   },
   {
     id: 'deuda_tarjeta',
-    acreedor: 'Tarjeta de crédito',
+    acreedor: 'Tarjeta de crÃ©dito',
     tipo: 'Tarjeta',
     saldo_inicial: 3_000_000,
     cuota_mensual: 1_137_000,
     pagado: 0,
     saldo_restante: 3_000_000,
     fecha_pago: '10',
-    estado: 'Al día',
+    estado: 'Al dÃ­a',
   },
   {
     id: 'deuda_prestamo',
-    acreedor: 'Préstamo',
-    tipo: 'Préstamo',
+    acreedor: 'PrÃ©stamo',
+    tipo: 'PrÃ©stamo',
     saldo_inicial: 4_100_000,
     cuota_mensual: 4_100_000,
     pagado: 0,
     saldo_restante: 4_100_000,
     fecha_pago: '25',
-    estado: 'Al día',
+    estado: 'Al dÃ­a',
   },
 ];
 
-// 6 clientes recurrentes activos con sus reglas de distribución.
+// 6 clientes recurrentes activos con sus reglas de distribuciÃ³n.
 // margen_30 (default): costo operativo 150k + 30% del margen.
 // pago_30 (Impulsy): solo 30% del pago total como ahorro.
 export const mockClientesMRR: ClienteMRR[] = [
@@ -474,3 +474,4 @@ export const mockClientesMRR: ClienteMRR[] = [
     ahorro_pct: 30,
   },
 ];
+
