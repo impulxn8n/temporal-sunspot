@@ -307,6 +307,20 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
           });
         }, 100);
       }
+
+      if (distribucion.dineroLibre > 0) {
+        setTimeout(() => {
+          addTransferencia({
+            fromSpaceId: SPACE_IDS.BUSINESS,
+            toSpaceId: SPACE_IDS.PERSONAL,
+            monto: distribucion.dineroLibre,
+            fecha: today,
+            descripcion: `Personal (Libre MRR): ${cliente.cliente}`,
+            metodoPago: 'Interna',
+            cuenta: 'Interna',
+          });
+        }, 150);
+      }
     }
   }, [clientesMRR, addMovimiento, addTransferencia]);
 
