@@ -20,7 +20,7 @@ export const PeriodSelector: React.FC = () => {
   const displayDate = parseISO(`${selectedPeriod}-01`);
 
   return (
-    <div className="flex items-center gap-4 bg-slate-800/50 border border-slate-700/50 p-2 rounded-2xl backdrop-blur-sm">
+    <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-4 bg-slate-800/50 border border-slate-700/50 p-2 rounded-2xl backdrop-blur-sm w-full">
       <button 
         onClick={handlePrev}
         className="p-2 hover:bg-slate-700 rounded-xl text-slate-400 hover:text-white transition-all"

@@ -31,9 +31,9 @@ export const POSForm: React.FC = () => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto animate-in slide-in-from-bottom-4 duration-500">
+    <div className="max-w-2xl mx-auto px-4 sm:px-6 animate-in slide-in-from-bottom-4 duration-500">
       <div className="bg-slate-800 border border-slate-700 rounded-3xl overflow-hidden shadow-2xl">
-        <div className="p-8 bg-gradient-to-br from-indigo-600/20 to-purple-600/20 border-b border-slate-700">
+        <div className="p-6 md:p-8 bg-gradient-to-br from-indigo-600/20 to-purple-600/20 border-b border-slate-700">
           <h2 className="text-2xl font-bold text-white flex items-center gap-3">
             <DollarSign className="text-indigo-400" />
             POS SIMPLE
@@ -41,8 +41,8 @@ export const POSForm: React.FC = () => {
           <p className="text-slate-400 text-sm mt-1">Registro rápido de movimiento financiero</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-8 space-y-6">
-          <div className="grid grid-cols-2 gap-6">
+        <form onSubmit={handleSubmit} className="p-6 md:p-8 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Fecha</label>
               <div className="relative">
@@ -73,7 +73,7 @@ export const POSForm: React.FC = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Unidad</label>
               <select
@@ -124,18 +124,18 @@ export const POSForm: React.FC = () => {
             />
           </div>
 
-          <div className="flex gap-4 pt-4">
+          <div className="flex flex-col sm:flex-row gap-4 pt-4">
             <button
               type="button"
               onClick={() => navigate(-1)}
-              className="flex-1 px-6 py-4 bg-slate-700 hover:bg-slate-600 text-white font-bold rounded-2xl transition-all flex items-center justify-center gap-2"
+              className="w-full sm:flex-1 px-6 py-4 bg-slate-700 hover:bg-slate-600 text-white font-bold rounded-2xl transition-all flex items-center justify-center gap-2"
             >
               <X size={20} />
               CANCELAR
             </button>
             <button
               type="submit"
-              className="flex-[2] px-6 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold rounded-2xl shadow-lg shadow-indigo-500/20 transition-all flex items-center justify-center gap-2"
+              className="w-full sm:flex-[2] px-6 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold rounded-2xl shadow-lg shadow-indigo-500/20 transition-all flex items-center justify-center gap-2"
             >
               <Save size={20} />
               GUARDAR MOVIMIENTO

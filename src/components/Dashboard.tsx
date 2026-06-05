@@ -35,11 +35,11 @@ export const Dashboard: React.FC = () => {
           <h2 className="text-3xl lg:text-4xl font-black text-white tracking-tighter">Financial Intelligence</h2>
           <p className="text-slate-500 font-bold uppercase tracking-[0.2em] text-[8px] lg:text-[10px] mt-1">SM DIGITALS Dashboard v3.0</p>
         </div>
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="bg-[#0a0a0f] border border-white/5 p-2 rounded-2xl flex items-center shadow-2xl">
+        <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
+          <div className="bg-[#0a0a0f] border border-white/5 p-2 rounded-2xl flex items-center shadow-2xl max-w-full overflow-hidden">
             <SpaceSelector />
           </div>
-          <div className="bg-[#0a0a0f] border border-white/5 p-2 rounded-2xl flex items-center shadow-2xl">
+          <div className="bg-[#0a0a0f] border border-white/5 p-2 rounded-2xl flex items-center shadow-2xl max-w-full overflow-hidden">
             <PeriodSelector />
           </div>
         </div>

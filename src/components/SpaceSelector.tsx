@@ -18,14 +18,14 @@ export const SpaceSelector: React.FC = () => {
   ];
 
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="flex overflow-x-auto pb-2 -mb-2 gap-2 snap-x hide-scrollbar scroll-smooth w-full">
       {baseViews.map(v => {
         const isActive = selectedView === v.id;
         return (
           <button
             key={v.id}
             onClick={() => setSelectedView(v.id)}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border ${
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border shrink-0 whitespace-nowrap snap-center ${
               isActive
                 ? 'bg-brand-primary/15 border-brand-primary/40 text-brand-primary shadow-lg shadow-brand-primary/10'
                 : 'bg-white/[0.02] border-white/5 text-slate-500 hover:text-white hover:border-white/10'
@@ -47,7 +47,7 @@ export const SpaceSelector: React.FC = () => {
             key={s.id}
             onClick={() => setSelectedView(s.id)}
             style={isActive ? { borderColor: `${s.color}55`, color: s.color, backgroundColor: `${s.color}15` } : undefined}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border ${
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border shrink-0 whitespace-nowrap snap-center ${
               isActive ? '' : 'bg-white/[0.02] border-white/5 text-slate-500 hover:text-white hover:border-white/10'
             }`}
           >
