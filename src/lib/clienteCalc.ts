@@ -8,7 +8,7 @@ export interface ClienteDistribucion {
   dineroLibre: number;     // valor_mensual - totalASeparar
 }
 
-export const COSTO_OPERATIVO_DEFAULT = 150_000;
+export const COSTO_OPERATIVO_DEFAULT = 350_000;
 export const AHORRO_PCT_DEFAULT = 30;
 
 export const calcularDistribucionCliente = (
