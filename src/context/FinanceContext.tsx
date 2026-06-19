@@ -3,7 +3,6 @@ import type { Movimiento, ClienteMRR, Proyecto, Deuda, Presupuesto, Space, Space
 import { loadData, saveData } from '../lib/storage';
 import { spaceIdToUnidad, unidadToSpaceId, SPACE_IDS, defaultSpaces } from '../lib/spaces';
 import { createFinanceSpreadsheet, updateSheetValues, getSpreadsheetIdByName, getSheetValues } from '../lib/googleSheets';
-import { calcularDistribucionCliente } from '../lib/clienteCalc';
 import { db } from '../lib/supabaseStorage';
 
 export interface SpaceBalance {
@@ -278,48 +277,67 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     });
 
     if (shouldDistribute) {
-      const distribucion = calcularDistribucionCliente(cliente);
+      const baseSpaceId = SPACE_IDS.BUSINESS;
+      const ingresoReal = cliente.valor_mensual;
 
-      if (distribucion.costoOperativo > 0) {
+      const seguridad = Math.round(ingresoReal * 0.15);
+      const inversion = Math.round(ingresoReal * 0.25);
+      const gastosBase = Math.round(ingresoReal * 0.50);
+      const caprichos = ingresoReal - (seguridad + inversion + gastosBase);
+
+      if (seguridad > 0) {
         setTimeout(() => {
           addTransferencia({
-            fromSpaceId: SPACE_IDS.BUSINESS,
-            toSpaceId: SPACE_IDS.BOLS_OPERATIVO,
-            monto: distribucion.costoOperativo,
+            fromSpaceId: baseSpaceId,
+            toSpaceId: SPACE_IDS.BOLS_SEGURIDAD,
+            monto: seguridad,
             fecha: today,
-            descripcion: `Costos: ${cliente.cliente}`,
+            descripcion: `Seguridad (15%): ${cliente.cliente}`,
             metodoPago: 'Interna',
             cuenta: 'Interna',
           });
         }, 50);
       }
-
-      if (distribucion.ahorro > 0) {
+      if (inversion > 0) {
         setTimeout(() => {
           addTransferencia({
-            fromSpaceId: SPACE_IDS.BUSINESS,
-            toSpaceId: SPACE_IDS.BOLS_EMERGENCIA,
-            monto: distribucion.ahorro,
+            fromSpaceId: baseSpaceId,
+            toSpaceId: SPACE_IDS.BOLS_INVERSION,
+            monto: inversion,
             fecha: today,
-            descripcion: `Emergencia: ${cliente.cliente}`,
+            descripcion: `Inversión (25%): ${cliente.cliente}`,
             metodoPago: 'Interna',
             cuenta: 'Interna',
           });
         }, 100);
       }
 
-      if (distribucion.dineroLibre > 0) {
+      if (gastosBase > 0) {
         setTimeout(() => {
           addTransferencia({
-            fromSpaceId: SPACE_IDS.BUSINESS,
-            toSpaceId: SPACE_IDS.PERSONAL,
-            monto: distribucion.dineroLibre,
+            fromSpaceId: baseSpaceId,
+            toSpaceId: SPACE_IDS.BOLS_GASTOS_BASE,
+            monto: gastosBase,
             fecha: today,
-            descripcion: `Personal (Libre MRR): ${cliente.cliente}`,
+            descripcion: `Gastos Base (50%): ${cliente.cliente}`,
             metodoPago: 'Interna',
             cuenta: 'Interna',
           });
         }, 150);
+      }
+
+      if (caprichos > 0) {
+        setTimeout(() => {
+          addTransferencia({
+            fromSpaceId: baseSpaceId,
+            toSpaceId: SPACE_IDS.BOLS_CAPRICHOS,
+            monto: caprichos,
+            fecha: today,
+            descripcion: `Caprichos (10%): ${cliente.cliente}`,
+            metodoPago: 'Interna',
+            cuenta: 'Interna',
+          });
+        }, 200);
       }
     }
   }, [clientesMRR, addMovimiento, addTransferencia]);
@@ -486,7 +504,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       setTimeout(() => {
         addTransferencia({
           fromSpaceId: baseSpaceId,
-          toSpaceId: SPACE_IDS.BOLS_EMERGENCIA,
+          toSpaceId: SPACE_IDS.BOLS_SEGURIDAD,
           monto: ahorro,
           fecha: dateStr,
           descripcion: `Ahorro/Inversión (40%): ${project.nombre_proyecto}`,
@@ -512,7 +530,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       setTimeout(() => {
         addTransferencia({
           fromSpaceId: baseSpaceId,
-          toSpaceId: SPACE_IDS.BOLS_OPERATIVO,
+          toSpaceId: SPACE_IDS.BOLS_GASTOS_BASE,
           monto: operativo,
           fecha: dateStr,
           descripcion: `Costos (20%): ${project.nombre_proyecto}`,

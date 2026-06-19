@@ -14,7 +14,7 @@ export const SpaceSelector: React.FC = () => {
 
   const baseViews: { id: SpaceView; label: string; Icon: React.ComponentType<{ size?: number; className?: string }> }[] = [
     { id: 'global', label: 'Global', Icon: Globe },
-    { id: 'business', label: 'Negocio', Icon: Briefcase },
+    
   ];
 
   return (

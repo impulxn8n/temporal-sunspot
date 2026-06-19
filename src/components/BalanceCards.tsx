@@ -57,6 +57,20 @@ export const BalanceCards: React.FC = () => {
                   <span className="text-brand-income font-black">+${b.income.toLocaleString('es-CO')}</span>
                   <span className="text-brand-expense font-black text-right">-${b.expenses.toLocaleString('es-CO')}</span>
                 </div>
+                {s.id === 'sp_bols_emergencia' && (
+                  <div className="mt-4 relative z-10">
+                    <div className="flex justify-between text-[8px] font-black uppercase text-slate-400 mb-1">
+                      <span>Meta: $18M</span>
+                      <span>{Math.min(100, Math.round((b.balance / 18000000) * 100))}%</span>
+                    </div>
+                    <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-[#3B82F6] rounded-full" 
+                        style={{ width: `${Math.min(100, Math.max(0, (b.balance / 18000000) * 100))}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
                 {(b.transfersIn > 0 || b.transfersOut > 0) && (
                   <div className="mt-3 pt-3 border-t border-white/5 flex justify-between text-[9px] text-slate-500 font-black uppercase tracking-widest relative z-10">
                     <span className="flex items-center gap-1">
