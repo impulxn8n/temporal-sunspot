@@ -12,35 +12,31 @@ import { CashFlowProjection } from './CashFlowProjection';
 import { CuentasPorCobrar } from './CuentasPorCobrar';
 
 export const Dashboard: React.FC = () => {
-  const { stats, movimientos, addMovimiento } = useFinance();
+  const { stats, movimientos, addMovimiento, removeMovimiento, balancesBySpace } = useFinance();
 
   useEffect(() => {
-    if (window.localStorage.getItem('adjusted') === 'true') return;
-    if (!movimientos || movimientos.length === 0) return;
+    if (window.localStorage.getItem('adjusted_v4') === 'true') return;
+    if (!movimientos || !balancesBySpace || Object.keys(balancesBySpace).length === 0) return;
     
+    // First, find and delete the bad ones
+    const bad = movimientos.filter(m => m.descripcion === 'Ajuste automático para cuadrar saldos' && m.categoria === 'Ajuste');
+    if (bad.length > 0) {
+        bad.forEach(m => removeMovimiento(m.id));
+        return; // wait for next render
+    }
+
     const targets: Record<string, number> = {
         'sp_bols_emergencia': 860700,
         'sp_bols_operativo': 1417000,
         'sp_bols_caprichos': 173557,
         'sp_bols_inversion': 434500
     };
-    const balances: Record<string, number> = {
-        'sp_bols_emergencia': 0,
-        'sp_bols_operativo': 0,
-        'sp_bols_caprichos': 0,
-        'sp_bols_inversion': 0
-    };
-
-    for (const m of movimientos) {
-        if (!balances.hasOwnProperty(m.space_id)) continue;
-        if (m.tipo_movimiento === 'Ingreso') balances[m.space_id] += m.monto;
-        else if (m.tipo_movimiento === 'Gasto') balances[m.space_id] -= m.monto;
-    }
 
     let needsAdjust = false;
     for (const [space_id, target] of Object.entries(targets)) {
-        const diff = target - balances[space_id];
-        if (diff !== 0) {
+        const currentBalance = balancesBySpace[space_id]?.balance || 0;
+        const diff = target - currentBalance;
+        if (Math.abs(diff) > 10) { 
             needsAdjust = true;
             addMovimiento({
                 space_id,
@@ -54,19 +50,19 @@ export const Dashboard: React.FC = () => {
                 categoria: 'Ajuste',
                 subcategoria: 'Ajuste Saldo',
                 cliente_proveedor: 'Ajuste Sistema',
-                descripcion: 'Ajuste automático para cuadrar saldos',
+                descripcion: 'Ajuste automático v4',
                 metodo_pago: 'Ajuste',
                 recurrente: false
             } as any);
         }
     }
     
+    window.localStorage.setItem('adjusted_v4', 'true');
     if (needsAdjust) {
-        window.localStorage.setItem('adjusted', 'true');
-        alert('¡Saldos actualizados mágicamente!');
+        alert('¡Saldos corregidos y actualizados!');
         window.location.reload();
     }
-  }, [movimientos, addMovimiento]);
+  }, [movimientos, balancesBySpace, addMovimiento, removeMovimiento]);
 
   const kpis = [
     { label: 'Ingresos Periodo', value: stats.periodIncome, icon: TrendingUp, color: 'text-brand-income', bg: 'bg-brand-income/10', border: 'border-brand-income/20', shadow: 'shadow-brand-income/5' },

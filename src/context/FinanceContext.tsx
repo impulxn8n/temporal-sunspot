@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useMemo } from 'react';
 import type { Movimiento, ClienteMRR, Proyecto, Deuda, Presupuesto, Space, SpaceView, CuentaPorCobrar } from '../types';
 import { loadData, saveData } from '../lib/storage';
-import { spaceIdToUnidad, unidadToSpaceId, SPACE_IDS, defaultSpaces } from '../lib/spaces';
+import { spaceIdToUnidad, unidadToSpaceId, SPACE_IDS, defaultSpaces, BOLSILLO_SPACE_IDS } from '../lib/spaces';
 import { createFinanceSpreadsheet, updateSheetValues, getSpreadsheetIdByName, getSheetValues } from '../lib/googleSheets';
 import { db } from '../lib/supabaseStorage';
 
