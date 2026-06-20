@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sincronización de Saldos</title>
+</head>
+<body style="font-family: sans-serif; background: #000; color: #fff; padding: 2rem;">
+    <h1>Sincronizando saldos con tu cuenta real...</h1>
+    <p id="status">Obteniendo movimientos...</p>
+    <script>
+        const SUPABASE_URL = 'https://chczqgbxwykxnjfjcsax.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNoY3pxZ2J4d3lreG5qZmpjc2F4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NjUyNjksImV4cCI6MjA5NDI0MTI2OX0.mRBd5gWpwPBlAhRvxhiYqoMbi7TX-BFhck16n5lHCKc';
+        
+        const headers = {
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=representation'
+        };
+
+        const targets = {
+            'sp_bols_emergencia': 860700,
+            'sp_bols_operativo': 1417000,
+            'sp_bols_caprichos': 173557,
+            'sp_bols_inversion': 434500
+        };
+
+        async function run() {
+            try {
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/movimientos?select=*`, { headers });
+                if (!res.ok) throw new Error("Failed to fetch");
+                const movimientos = await res.json();
+
+                const balances = {
+                    'sp_bols_emergencia': 0,
+                    'sp_bols_operativo': 0,
+                    'sp_bols_caprichos': 0,
+                    'sp_bols_inversion': 0
+                };
+
+                for (const m of movimientos) {
+                    if (!balances.hasOwnProperty(m.space_id)) continue;
+                    
+                    if (m.tipo_movimiento === 'Ingreso') {
+                        balances[m.space_id] += m.monto;
+                    } else if (m.tipo_movimiento === 'Gasto') {
+                        balances[m.space_id] -= m.monto;
+                    }
+                }
+
+                document.getElementById('status').innerText = "Saldos actuales obtenidos. Verificando...";
+
+                const adjustments = [];
+                const today = new Date();
+                const fecha = today.toISOString().split('T')[0];
+                const periodo = fecha.substring(0, 7);
+
+                for (const [space_id, target] of Object.entries(targets)) {
+                    const current = balances[space_id];
+                    const diff = target - current;
+
+                    if (diff !== 0) {
+                        adjustments.push({
+                            id: crypto.randomUUID(),
+                            fecha: fecha,
+                            periodo: periodo,
+                            año: today.getFullYear(),
+                            mes: today.getMonth() + 1,
+                            unidad: 'SM DIGITALS',
+                            space_id: space_id,
+                            tipo_movimiento: diff > 0 ? 'Ingreso' : 'Gasto',
+                            categoria: 'Ajuste',
+                            subcategoria: 'Ajuste Saldo',
+                            cliente_proveedor: 'Ajuste Sistema',
+                            descripcion: 'Ajuste automático para cuadrar con app Bancolombia',
+                            metodo_pago: 'Ajuste',
+                            monto: Math.abs(diff),
+                            recurrente: false
+                        });
+                    }
+                }
+
+                if (adjustments.length > 0) {
+                    document.getElementById('status').innerText = `Aplicando ${adjustments.length} ajustes...`;
+                    
+                    const insertRes = await fetch(`${SUPABASE_URL}/rest/v1/movimientos`, {
+                        method: 'POST',
+                        headers,
+                        body: JSON.stringify(adjustments)
+                    });
+                    
+                    if (!insertRes.ok) throw new Error("Failed to insert");
+                    
+                    document.getElementById('status').innerText = "¡Saldos actualizados correctamente! Ya puedes cerrar esta pestaña y recargar la app original.";
+                    document.getElementById('status').style.color = "#4ade80";
+                } else {
+                    document.getElementById('status').innerText = "¡Tus saldos ya están perfectamente cuadrados!";
+                    document.getElementById('status').style.color = "#4ade80";
+                }
+            } catch (err) {
+                document.getElementById('status').innerText = "Error: " + err.message;
+                document.getElementById('status').style.color = "#f87171";
+            }
+        }
+
+        run();
+    </script>
+</body>
+</html>
