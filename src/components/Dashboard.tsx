@@ -18,13 +18,13 @@ export const Dashboard: React.FC = () => {
     if (window.localStorage.getItem('adjusted') === 'true') return;
     if (!movimientos || movimientos.length === 0) return;
     
-    const targets = {
+    const targets: Record<string, number> = {
         'sp_bols_emergencia': 860700,
         'sp_bols_operativo': 1417000,
         'sp_bols_caprichos': 173557,
         'sp_bols_inversion': 434500
     };
-    const balances = {
+    const balances: Record<string, number> = {
         'sp_bols_emergencia': 0,
         'sp_bols_operativo': 0,
         'sp_bols_caprichos': 0,
@@ -44,6 +44,11 @@ export const Dashboard: React.FC = () => {
             needsAdjust = true;
             addMovimiento({
                 space_id,
+                fecha: new Date().toISOString().split('T')[0],
+                unidad: 'SM DIGITALS',
+                estado: 'Pagado',
+                impacto: 'Real',
+                cuenta: 'Bancolombia',
                 tipo_movimiento: diff > 0 ? 'Ingreso' : 'Gasto',
                 monto: Math.abs(diff),
                 categoria: 'Ajuste',
@@ -52,7 +57,7 @@ export const Dashboard: React.FC = () => {
                 descripcion: 'Ajuste automático para cuadrar saldos',
                 metodo_pago: 'Ajuste',
                 recurrente: false
-            });
+            } as any);
         }
     }
     
