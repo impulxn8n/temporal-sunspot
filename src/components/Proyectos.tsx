@@ -250,11 +250,35 @@ export const Proyectos: React.FC = () => {
                   {selectedProject.comision_pct ?? 100}% comisión
                 </span>
               </div>
-              {paymentAmount > 0 && (
-                <p className="text-[10px] text-emerald-400 font-black mt-2">
-                  Tu ingreso real: ${Math.round(paymentAmount * ((selectedProject.comision_pct ?? 100) / 100)).toLocaleString('es-CO')}
-                </p>
-              )}
+              {paymentAmount > 0 && (() => {
+                const realIncome = Math.round(paymentAmount * ((selectedProject.comision_pct ?? 100) / 100));
+                return (
+                  <div className="mt-4 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
+                    <p className="text-xs text-emerald-400 font-black mb-3">
+                      Tu ingreso neto será: ${realIncome.toLocaleString('es-CO')}
+                    </p>
+                    <p className="text-[10px] text-slate-400 mb-2 uppercase tracking-wider font-bold">Distribución automática (Pay Yourself First):</p>
+                    <div className="grid grid-cols-2 gap-2 text-[10px] font-medium text-white">
+                      <div className="bg-black/40 px-2 py-1.5 rounded flex justify-between items-center">
+                        <span>💼 Gastos (50%)</span>
+                        <span className="text-emerald-400 font-bold">${Math.round(realIncome * 0.50).toLocaleString('es-CO')}</span>
+                      </div>
+                      <div className="bg-black/40 px-2 py-1.5 rounded flex justify-between items-center">
+                        <span>📈 Inversión (25%)</span>
+                        <span className="text-emerald-400 font-bold">${Math.round(realIncome * 0.25).toLocaleString('es-CO')}</span>
+                      </div>
+                      <div className="bg-black/40 px-2 py-1.5 rounded flex justify-between items-center">
+                        <span>🛡️ Seguridad (15%)</span>
+                        <span className="text-emerald-400 font-bold">${Math.round(realIncome * 0.15).toLocaleString('es-CO')}</span>
+                      </div>
+                      <div className="bg-black/40 px-2 py-1.5 rounded flex justify-between items-center">
+                        <span>✨ Caprichos (10%)</span>
+                        <span className="text-emerald-400 font-bold">${Math.round(realIncome * 0.10).toLocaleString('es-CO')}</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
             <form onSubmit={handlePayment} className="space-y-6">
               <div className="space-y-2">
