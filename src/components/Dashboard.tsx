@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useFinance } from '../hooks/useFinance';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
@@ -12,7 +12,56 @@ import { CashFlowProjection } from './CashFlowProjection';
 import { CuentasPorCobrar } from './CuentasPorCobrar';
 
 export const Dashboard: React.FC = () => {
-  const { stats } = useFinance();
+  const { stats, movimientos, addMovimiento } = useFinance();
+
+  useEffect(() => {
+    if (window.localStorage.getItem('adjusted') === 'true') return;
+    if (!movimientos || movimientos.length === 0) return;
+    
+    const targets = {
+        'sp_bols_emergencia': 860700,
+        'sp_bols_operativo': 1417000,
+        'sp_bols_caprichos': 173557,
+        'sp_bols_inversion': 434500
+    };
+    const balances = {
+        'sp_bols_emergencia': 0,
+        'sp_bols_operativo': 0,
+        'sp_bols_caprichos': 0,
+        'sp_bols_inversion': 0
+    };
+
+    for (const m of movimientos) {
+        if (!balances.hasOwnProperty(m.space_id)) continue;
+        if (m.tipo_movimiento === 'Ingreso') balances[m.space_id] += m.monto;
+        else if (m.tipo_movimiento === 'Gasto') balances[m.space_id] -= m.monto;
+    }
+
+    let needsAdjust = false;
+    for (const [space_id, target] of Object.entries(targets)) {
+        const diff = target - balances[space_id];
+        if (diff !== 0) {
+            needsAdjust = true;
+            addMovimiento({
+                space_id,
+                tipo_movimiento: diff > 0 ? 'Ingreso' : 'Gasto',
+                monto: Math.abs(diff),
+                categoria: 'Ajuste',
+                subcategoria: 'Ajuste Saldo',
+                cliente_proveedor: 'Ajuste Sistema',
+                descripcion: 'Ajuste automático para cuadrar saldos',
+                metodo_pago: 'Ajuste',
+                recurrente: false
+            });
+        }
+    }
+    
+    if (needsAdjust) {
+        window.localStorage.setItem('adjusted', 'true');
+        alert('¡Saldos actualizados mágicamente!');
+        window.location.reload();
+    }
+  }, [movimientos, addMovimiento]);
 
   const kpis = [
     { label: 'Ingresos Periodo', value: stats.periodIncome, icon: TrendingUp, color: 'text-brand-income', bg: 'bg-brand-income/10', border: 'border-brand-income/20', shadow: 'shadow-brand-income/5' },
