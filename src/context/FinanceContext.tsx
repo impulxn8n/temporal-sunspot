@@ -593,6 +593,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       netCashFlow: 0,
     };
     for (const id in balancesBySpace) {
+      if (!BOLSILLO_SPACE_IDS.includes(id)) continue;
       const b = balancesBySpace[id];
       agg.income += b.income;
       agg.expenses += b.expenses;
