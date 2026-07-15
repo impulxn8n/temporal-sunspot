@@ -149,6 +149,47 @@ export const Dashboard: React.FC = () => {
 
   }, [addMovimiento, addTransferencia]);
 
+
+  useEffect(() => {
+    if (window.localStorage.getItem('july_expenses_p2') === 'true') return;
+
+    const julyExpenses2 = [
+      { desc: "barberia", monto: 200000, spaceId: "sp_bols_caprichos", subcat: "Personal" },
+      { desc: "gasolina", monto: 200000, spaceId: "sp_bols_operativo", subcat: "Transporte" },
+      { desc: "gauro con kiki", monto: 100000, spaceId: "sp_bols_caprichos", subcat: "Entretenimiento" },
+      { desc: "cargador iphonbe", monto: 50000, spaceId: "sp_bols_caprichos", subcat: "Tecnología" },
+      { desc: "regalo para familia almuerzo", monto: 100000, spaceId: "sp_bols_caprichos", subcat: "Regalos" },
+      { desc: "gastos oficina", monto: 900000, spaceId: "sp_business", subcat: "Oficina" },
+      { desc: "deuda credito", monto: 800000, spaceId: "sp_bols_operativo", subcat: "Deudas" }
+    ];
+
+    const fecha = "2026-07-15";
+
+    julyExpenses2.forEach((exp) => {
+      addMovimiento({
+        space_id: exp.spaceId,
+        fecha,
+        unidad: 'SM DIGITALS',
+        tipo_movimiento: 'Gasto',
+        categoria: 'Gastos Fijos',
+        subcategoria: exp.subcat,
+        cliente_proveedor: exp.desc,
+        descripcion: exp.desc,
+        metodo_pago: 'Tarjeta de Crédito',
+        monto: exp.monto,
+        recurrente: false,
+        estado: 'Pagado',
+        impacto: 'Real',
+        cuenta: 'Bancolombia'
+      } as any);
+    });
+
+    window.localStorage.setItem('july_expenses_p2', 'true');
+    alert('Nuevos gastos de Julio registrados correctamente.');
+    window.location.reload();
+
+  }, [addMovimiento]);
+
   const kpis = [
     { label: 'Ingresos Periodo', value: stats.periodIncome, icon: TrendingUp, color: 'text-brand-income', bg: 'bg-brand-income/10', border: 'border-brand-income/20', shadow: 'shadow-brand-income/5' },
     { label: 'Gastos Periodo', value: stats.periodExpenses, icon: TrendingDown, color: 'text-brand-expense', bg: 'bg-brand-expense/10', border: 'border-brand-expense/20', shadow: 'shadow-brand-expense/5' },

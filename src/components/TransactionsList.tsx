@@ -7,6 +7,7 @@ import { ArrowUpRight, ArrowDownRight, Search, Trash2 } from 'lucide-react';
 
 export const TransactionsList: React.FC = () => {
   const { filteredMovimientos, removeMovimiento } = useFinance();
+  const visibleMovs = filteredMovimientos.filter(mov => mov.tipo_movimiento !== 'Transferencia');
 
   return (
     <div className="space-y-6 lg:space-y-10 animate-in fade-in duration-700 pb-20 text-slate-200">
@@ -28,8 +29,8 @@ export const TransactionsList: React.FC = () => {
         
         {/* MOBILE VIEW */}
         <div className="block lg:hidden divide-y divide-white/5">
-          {filteredMovimientos.length > 0 ? (
-            filteredMovimientos.sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime()).map((mov) => {
+          {visibleMovs.length > 0 ? (
+            visibleMovs.sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime()).map((mov) => {
               const isIncome = mov.tipo_movimiento === 'Ingreso' || (mov.tipo_movimiento === 'Transferencia' && mov.subcategoria === 'Entrada');
               return (
                 <div key={mov.id} className="p-5 flex flex-col gap-4 relative hover:bg-white/[0.02] transition-colors group">
@@ -96,8 +97,8 @@ export const TransactionsList: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
-              {filteredMovimientos.length > 0 ? (
-                filteredMovimientos.sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime()).map((mov) => {
+              {visibleMovs.length > 0 ? (
+                visibleMovs.sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime()).map((mov) => {
                   const isIncome = mov.tipo_movimiento === 'Ingreso' || (mov.tipo_movimiento === 'Transferencia' && mov.subcategoria === 'Entrada');
                   return (
                     <tr key={mov.id} className="hover:bg-white/[0.02] transition-colors group">
