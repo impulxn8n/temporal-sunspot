@@ -190,6 +190,50 @@ export const Dashboard: React.FC = () => {
 
   }, [addMovimiento]);
 
+
+  useEffect(() => {
+    if (window.localStorage.getItem('adjusted_v5') === 'true') return;
+    if (!movimientos || !balancesBySpace || Object.keys(balancesBySpace).length === 0) return;
+    
+    const targets: Record<string, number> = {
+        'sp_bols_emergencia': 2643725,
+        'sp_bols_inversion': 2042062,
+        'sp_bols_caprichos': 284459,
+        'sp_bols_operativo': 0
+    };
+
+    let needsAdjust = false;
+    for (const [space_id, target] of Object.entries(targets)) {
+        const currentBalance = balancesBySpace[space_id]?.balance || 0;
+        const diff = target - currentBalance;
+        if (Math.abs(diff) > 10) { 
+            needsAdjust = true;
+            addMovimiento({
+                space_id,
+                fecha: new Date().toISOString().split('T')[0],
+                unidad: 'SM DIGITALS',
+                estado: 'Pagado',
+                impacto: 'Real',
+                cuenta: 'Bancolombia',
+                tipo_movimiento: diff > 0 ? 'Ingreso' : 'Gasto',
+                monto: Math.abs(diff),
+                categoria: 'Ajuste',
+                subcategoria: 'Ajuste Saldo',
+                cliente_proveedor: 'Ajuste Sistema',
+                descripcion: 'Ajuste automático v5 (Re-sync julio)',
+                metodo_pago: 'Ajuste',
+                recurrente: false
+            } as any);
+        }
+    }
+    
+    window.localStorage.setItem('adjusted_v5', 'true');
+    if (needsAdjust) {
+        alert('¡Saldos de bolsillos corregidos y sincronizados con tus cuentas reales!');
+        window.location.reload();
+    }
+  }, [movimientos, balancesBySpace, addMovimiento]);
+
   const kpis = [
     { label: 'Ingresos Periodo', value: stats.periodIncome, icon: TrendingUp, color: 'text-brand-income', bg: 'bg-brand-income/10', border: 'border-brand-income/20', shadow: 'shadow-brand-income/5' },
     { label: 'Gastos Periodo', value: stats.periodExpenses, icon: TrendingDown, color: 'text-brand-expense', bg: 'bg-brand-expense/10', border: 'border-brand-expense/20', shadow: 'shadow-brand-expense/5' },

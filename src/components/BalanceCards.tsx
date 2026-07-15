@@ -3,7 +3,7 @@ import { useFinance } from '../context/FinanceContext';
 import { ArrowUpRight, ArrowDownRight, Wallet, ArrowLeftRight } from 'lucide-react';
 
 export const BalanceCards: React.FC = () => {
-  const { spaces, balancesBySpace, globalBalance, selectedView } = useFinance();
+  const { spaces, balancesBySpace, globalBalance, selectedView, stats } = useFinance();
 
   if (selectedView === 'global') {
     const visibleSpaces = spaces.filter(s => !s.archived);
@@ -20,10 +20,10 @@ export const BalanceCards: React.FC = () => {
           </h2>
           <div className="flex flex-wrap gap-6 mt-4 relative z-10">
             <span className="text-[11px] text-brand-income font-black flex items-center gap-1">
-              <ArrowUpRight size={12} /> Ingresos: ${globalBalance.income.toLocaleString('es-CO')}
+              <ArrowUpRight size={12} /> Ingresos: ${stats.totalIncome.toLocaleString('es-CO')}
             </span>
             <span className="text-[11px] text-brand-expense font-black flex items-center gap-1">
-              <ArrowDownRight size={12} /> Gastos: ${globalBalance.expenses.toLocaleString('es-CO')}
+              <ArrowDownRight size={12} /> Gastos: ${stats.totalExpenses.toLocaleString('es-CO')}
             </span>
           </div>
         </div>
