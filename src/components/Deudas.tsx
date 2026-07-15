@@ -1,9 +1,11 @@
 import React from 'react';
+import { useState } from 'react';
 import { useFinance } from '../context/FinanceContext';
 import { CreditCard, ShieldCheck, TrendingDown, RotateCcw } from 'lucide-react';
 
 export const Deudas: React.FC = () => {
   const { deudas, updateDebt, undoDebtPayment } = useFinance();
+  const [paymentAmounts, setPaymentAmounts] = useState<Record<string, string>>({});
 
   return (
     <div className="space-y-10 animate-in fade-in duration-700 pb-20 text-slate-200">
@@ -68,17 +70,34 @@ export const Deudas: React.FC = () => {
               </div>
 
               <div className="flex flex-col gap-3 relative z-10">
-                <button 
-                  onClick={() => {
-                    const amount = deuda.cuota_mensual > 0 
-                      ? deuda.cuota_mensual 
-                      : Number(window.prompt(`Monto a pagar para ${deuda.acreedor}:`, deuda.saldo_restante.toString()));
-                    if (amount > 0) updateDebt(deuda.id, amount);
-                  }}
-                  className="w-full bg-brand-primary text-white font-black py-5 rounded-2xl hover:bg-brand-primary/80 transition-all shadow-2xl active:scale-95 uppercase tracking-widest text-[10px]"
-                >
-                  {deuda.cuota_mensual > 0 ? 'EFECTUAR PAGO DE CUOTA' : 'EFECTUAR ABONO PERSONALIZADO'}
-                </button>
+                <div className="flex items-center gap-2">
+                  <div className="relative flex-1">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/50 font-black">$</span>
+                    <input
+                      type="text"
+                      placeholder="Monto a abonar"
+                      value={paymentAmounts[deuda.id] || ''}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, '');
+                        setPaymentAmounts(prev => ({ ...prev, [deuda.id]: val ? parseInt(val, 10).toLocaleString('es-CO') : '' }));
+                      }}
+                      className="w-full bg-[#111111] border border-[#222222] text-white font-black rounded-2xl pl-8 pr-4 py-4 focus:border-brand-primary/50 outline-none"
+                    />
+                  </div>
+                  <button 
+                    onClick={() => {
+                      const val = parseInt((paymentAmounts[deuda.id] || '').replace(/\D/g, ''), 10);
+                      const amount = !isNaN(val) && val > 0 ? val : (deuda.cuota_mensual > 0 ? deuda.cuota_mensual : deuda.saldo_restante);
+                      if (amount > 0) {
+                        updateDebt(deuda.id, amount);
+                        setPaymentAmounts(prev => ({ ...prev, [deuda.id]: '' }));
+                      }
+                    }}
+                    className="bg-brand-primary text-white font-black py-4 px-6 rounded-2xl hover:bg-brand-primary/80 transition-all shadow-2xl active:scale-95 uppercase tracking-widest text-[10px]"
+                  >
+                    ABONAR
+                  </button>
+                </div>
                 <button 
                   onClick={() => {
                     const amount = deuda.cuota_mensual > 0 ? deuda.cuota_mensual : deuda.pagado;

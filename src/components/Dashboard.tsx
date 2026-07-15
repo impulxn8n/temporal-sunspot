@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { useFinance } from '../hooks/useFinance';
+import { db } from '../lib/supabaseStorage';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   AreaChart, Area
@@ -259,6 +260,59 @@ export const Dashboard: React.FC = () => {
     alert('Se han sumado $600.000 al bolsillo de Inversión.');
     window.location.reload();
   }, [addMovimiento]);
+
+
+  useEffect(() => {
+    if (window.localStorage.getItem('debts_migration_v2') === 'true') return;
+    
+    const runMigration = async () => {
+      try {
+        const allDebts = await db.deudas.load();
+        for (const debt of allDebts) {
+          await db.deudas.delete(debt.id);
+        }
+
+        const newDebts = [
+          {
+            id: crypto.randomUUID(),
+            acreedor: 'Tio Victor',
+            tipo: 'Personal',
+            saldo_inicial: 14660000,
+            saldo_restante: 14660000,
+            cuota_mensual: 0,
+            fecha_pago: '15',
+            pagado: 0,
+            estado: 'Al día',
+            created_at: new Date().toISOString()
+          },
+          {
+            id: crypto.randomUUID(),
+            acreedor: 'Crédito de Consumo',
+            tipo: 'Bancario',
+            saldo_inicial: 32270742,
+            saldo_restante: 32270742,
+            cuota_mensual: 0,
+            fecha_pago: '15',
+            pagado: 0,
+            estado: 'Al día',
+            created_at: new Date().toISOString()
+          }
+        ];
+
+        for (const debt of newDebts) {
+          await db.deudas.upsert(debt as any);
+        }
+
+        window.localStorage.setItem('debts_migration_v2', 'true');
+        alert('Deudas migradas correctamente.');
+        window.location.reload();
+      } catch (err) {
+        console.error('Migration error:', err);
+      }
+    };
+
+    runMigration();
+  }, []);
 
   const kpis = [
     { label: 'Ingresos Periodo', value: stats.periodIncome, icon: TrendingUp, color: 'text-brand-income', bg: 'bg-brand-income/10', border: 'border-brand-income/20', shadow: 'shadow-brand-income/5' },

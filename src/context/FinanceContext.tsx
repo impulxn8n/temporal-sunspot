@@ -46,7 +46,7 @@ interface FinanceContextType {
   addClienteMRR: (cliente: Omit<ClienteMRR, 'id'>) => ClienteMRR;
   updateClienteMRR: (id: string, updates: Partial<Omit<ClienteMRR, 'id'>>) => void;
   removeClienteMRR: (id: string) => void;
-  registerMRRPayment: (clienteId: string, shouldDistribute?: boolean) => void;
+  registerMRRPayment: (clienteId: string, shouldDistribute?: boolean, amountOverride?: number) => void;
   addProyecto: (proyecto: Omit<Proyecto, 'id'>, syncCalendar?: boolean) => void;
   removeProyecto: (id: string) => void;
   updateProyecto: (id: string, updates: Partial<Omit<Proyecto, 'id'>>) => void;
@@ -266,11 +266,12 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     db.clientesMRR.delete(id).catch(console.error);
   }, []);
 
-  const registerMRRPayment = useCallback((clienteId: string, shouldDistribute: boolean = true) => {
+  const registerMRRPayment = useCallback((clienteId: string, shouldDistribute: boolean = true, amountOverride?: number) => {
     const cliente = clientesMRR.find(c => c.id === clienteId);
     if (!cliente) return;
 
     const today = new Date().toISOString().split('T')[0];
+    const amountToUse = amountOverride !== undefined ? amountOverride : cliente.valor_mensual;
 
     addMovimiento({
       fecha: today,
@@ -281,7 +282,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       cliente_proveedor: cliente.cliente,
       descripcion: `Cobro: ${cliente.cliente} - ${cliente.servicio}`,
       metodo_pago: cliente.metodo_pago,
-      monto: cliente.valor_mensual,
+      monto: amountToUse,
       recurrente: false,
       estado: 'Pagado',
       impacto: 'Core',
@@ -290,7 +291,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
     if (shouldDistribute) {
       const baseSpaceId = SPACE_IDS.BUSINESS;
-      const ingresoReal = cliente.valor_mensual;
+      const ingresoReal = amountToUse;
 
       const seguridad = Math.round(ingresoReal * 0.15);
       const inversion = Math.round(ingresoReal * 0.25);

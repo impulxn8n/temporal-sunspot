@@ -80,6 +80,10 @@ export const db = {
       const { error } = await supabase.from('deudas').update(updates).eq('id', id);
       handle(error, 'update deuda');
     },
+    delete: async (id: string) => {
+      const { error } = await supabase.from('deudas').delete().eq('id', id);
+      handle(error, 'delete deuda');
+    },
     upsert: async (row: Deuda) => {
       const { error } = await supabase.from('deudas').upsert(row, { onConflict: 'id' });
       handle(error, 'upsert deuda');

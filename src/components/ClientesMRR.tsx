@@ -1,6 +1,6 @@
 import React from 'react';
 import { useFinance } from '../hooks/useFinance';
-import { Banknote, Calendar, Bell, RefreshCw, Plus, Wallet, Shield, TrendingUp, Check } from 'lucide-react';
+import { Banknote, Calendar, Bell, RefreshCw, Plus, Wallet, Shield, TrendingUp, Check, Trash2 } from 'lucide-react';
 import type { ClienteMRR } from '../types';
 import { useGoogleAuth } from '../hooks/useGoogleAuth';
 import { getOrCreateFinanceCalendar, createPaymentEvent } from '../lib/googleCalendar';
@@ -10,7 +10,7 @@ import { RegisterMRRPaymentsModal } from './RegisterMRRPaymentsModal';
 import { calcularDistribucionCliente, calcularDistribucionMensualMRR } from '../lib/clienteCalc';
 
 export const ClientesMRR: React.FC = () => {
-  const { clientesMRR, registerMRRPayment } = useFinance();
+  const { clientesMRR, registerMRRPayment, removeClienteMRR } = useFinance();
   const [showAdd, setShowAdd] = useState(false);
   const [showRegisterPayments, setShowRegisterPayments] = useState(false);
 
@@ -188,11 +188,23 @@ export const ClientesMRR: React.FC = () => {
                 <h4 className="text-xl lg:text-2xl font-black text-white tracking-tighter mb-1 truncate">{cliente.cliente}</h4>
                 <p className="text-[9px] text-slate-500 font-bold uppercase truncate">{cliente.servicio}</p>
               </div>
-              <span className={`text-[8px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest border ${
-                cliente.estado === 'Activo' ? 'bg-brand-income/5 text-brand-income border-brand-income/20' : 'bg-brand-gold/5 text-brand-gold border-brand-gold/20'
-              }`}>
-                {cliente.estado}
-              </span>
+              <div className="flex gap-2">
+                <span className={`text-[8px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest border ${
+                  cliente.estado === 'Activo' ? 'bg-brand-income/5 text-brand-income border-brand-income/20' : 'bg-brand-gold/5 text-brand-gold border-brand-gold/20'
+                }`}>
+                  {cliente.estado}
+                </span>
+                <button
+                  onClick={() => {
+                    if(window.confirm('¿Seguro que deseas eliminar este cliente MRR?')) {
+                      removeClienteMRR(cliente.id);
+                    }
+                  }}
+                  className="bg-brand-expense/10 text-brand-expense p-1.5 rounded-full hover:bg-brand-expense hover:text-black transition-all"
+                >
+                  <Trash2 size={12} />
+                </button>
+              </div>
             </div>
 
             <div className="space-y-4 lg:space-y-5 relative z-10">

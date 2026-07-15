@@ -10,6 +10,7 @@ interface RegisterMRRPaymentsModalProps {
 export const RegisterMRRPaymentsModal: React.FC<RegisterMRRPaymentsModalProps> = ({ open, onClose }) => {
   const { clientesMRR, registerMRRPayment } = useFinance();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [customAmounts, setCustomAmounts] = useState<Record<string, number>>({});
   const [shouldDistribute, setShouldDistribute] = useState(false);
 
   const activos = useMemo(() => clientesMRR.filter(c => c.estado === 'Activo'), [clientesMRR]);
@@ -17,9 +18,11 @@ export const RegisterMRRPaymentsModal: React.FC<RegisterMRRPaymentsModalProps> =
   const totalSeleccionado = useMemo(() => {
     return Array.from(selectedIds).reduce((sum, id) => {
       const cliente = activos.find(c => c.id === id);
-      return sum + (cliente?.valor_mensual || 0);
+      if (!cliente) return sum;
+      const amount = customAmounts[id] !== undefined ? customAmounts[id] : cliente.valor_mensual;
+      return sum + amount;
     }, 0);
-  }, [selectedIds, activos]);
+  }, [selectedIds, activos, customAmounts]);
 
   if (!open) return null;
 
@@ -34,9 +37,21 @@ export const RegisterMRRPaymentsModal: React.FC<RegisterMRRPaymentsModalProps> =
   };
 
   const handleRegisterAll = () => {
-    selectedIds.forEach(id => registerMRRPayment(id, shouldDistribute));
+    selectedIds.forEach(id => {
+      const amount = customAmounts[id];
+      registerMRRPayment(id, shouldDistribute, amount);
+    });
     setSelectedIds(new Set());
+    setCustomAmounts({});
     onClose();
+  };
+
+  const handleAmountChange = (id: string, val: string) => {
+    const num = parseInt(val.replace(/\D/g, ''), 10);
+    setCustomAmounts(prev => ({
+      ...prev,
+      [id]: isNaN(num) ? 0 : num
+    }));
   };
 
   const toggleAll = () => {
@@ -94,27 +109,35 @@ export const RegisterMRRPaymentsModal: React.FC<RegisterMRRPaymentsModalProps> =
             {/* Lista de clientes */}
             <div className="space-y-2 mb-6">
               {activos.map(cliente => (
-                <label
+                <div
                   key={cliente.id}
-                  className="flex items-center gap-3 p-3 rounded-xl border border-white/5 hover:border-white/10 hover:bg-white/[0.02] cursor-pointer transition-all"
+                  className="flex items-center gap-3 p-3 rounded-xl border border-white/5 hover:border-white/10 hover:bg-white/[0.02] transition-all"
                 >
-                  <input
-                    type="checkbox"
-                    checked={selectedIds.has(cliente.id)}
-                    onChange={() => toggleClient(cliente.id)}
-                    className="w-4 h-4 rounded border border-white/20 bg-white/5 accent-brand-primary"
-                  />
-                  <div className="flex-1">
-                    <p className="text-sm font-black text-white">{cliente.cliente}</p>
-                    <p className="text-[9px] text-slate-500 font-bold">{cliente.servicio}</p>
+                  <label className="flex items-center gap-3 flex-1 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(cliente.id)}
+                      onChange={() => toggleClient(cliente.id)}
+                      className="w-4 h-4 rounded border border-white/20 bg-white/5 accent-brand-primary"
+                    />
+                    <div className="flex-1">
+                      <p className="text-sm font-black text-white">{cliente.cliente}</p>
+                      <p className="text-[9px] text-slate-500 font-bold">{cliente.servicio}</p>
+                    </div>
+                  </label>
+                  <div className="text-right flex items-center gap-2">
+                    <div className="relative">
+                      <span className="absolute left-2 top-1/2 -translate-y-1/2 text-brand-primary font-black">$</span>
+                      <input
+                        type="text"
+                        value={(customAmounts[cliente.id] !== undefined ? customAmounts[cliente.id] : cliente.valor_mensual).toLocaleString('es-CO')}
+                        onChange={(e) => handleAmountChange(cliente.id, e.target.value)}
+                        className="bg-brand-primary/10 border border-brand-primary/20 text-brand-primary font-black rounded-lg pl-5 pr-2 py-1 text-sm w-28 text-right outline-none focus:border-brand-primary/50"
+                      />
+                    </div>
+                    <p className="text-[9px] text-slate-500 font-bold w-12 text-center">Día {cliente.dia_cobro}</p>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm font-black text-brand-primary">
-                      ${cliente.valor_mensual.toLocaleString('es-CO')}
-                    </p>
-                    <p className="text-[9px] text-slate-500 font-bold">Día {cliente.dia_cobro}</p>
-                  </div>
-                </label>
+                </div>
               ))}
             </div>
 
