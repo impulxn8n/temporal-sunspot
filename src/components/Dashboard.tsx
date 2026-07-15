@@ -12,7 +12,7 @@ import { CashFlowProjection } from './CashFlowProjection';
 import { CuentasPorCobrar } from './CuentasPorCobrar';
 
 export const Dashboard: React.FC = () => {
-  const { stats, movimientos, addMovimiento, removeMovimiento, balancesBySpace } = useFinance();
+  const { stats, movimientos, addMovimiento, removeMovimiento, balancesBySpace, addTransferencia } = useFinance();
 
   useEffect(() => {
     if (window.localStorage.getItem('adjusted_v4') === 'true') return;
@@ -63,6 +63,91 @@ export const Dashboard: React.FC = () => {
         window.location.reload();
     }
   }, [movimientos, balancesBySpace, addMovimiento, removeMovimiento]);
+
+
+  useEffect(() => {
+    if (window.localStorage.getItem('july_incomes_2026') === 'true') return;
+
+    const julyIncomes = [
+      { desc: "kp skincare automatizacion", monto: 883000 },
+      { desc: "proeletricos", monto: 1200000 },
+      { desc: "Pago segunda mitad web dr andres perez", monto: 800000 },
+      { desc: "ia up going", monto: 288000 },
+      { desc: "marac de moda makahzori", monto: 1000000 },
+      { desc: "autoamtzacion juan kommo", monto: 150000 },
+      { desc: "segunda autotmtizacion juan kommo", monto: 350000 }
+    ];
+
+    const fecha = "2026-07-15";
+    const baseSpaceId = "sp_business"; // Assuming "SM DIGITALS" or default business space
+    const SEGURIDAD = "sp_bols_emergencia"; // 15%
+    const INVERSION = "sp_bols_inversion"; // 25%
+    const GASTOS_BASE = "sp_bols_operativo"; // 50%
+    const CAPRICHOS = "sp_bols_caprichos"; // 10%
+
+    julyIncomes.forEach((inc) => {
+      const ingresoReal = inc.monto;
+      const seguridad = Math.round(ingresoReal * 0.15);
+      const inversion = Math.round(ingresoReal * 0.25);
+      const gastosBase = Math.round(ingresoReal * 0.50);
+      const caprichos = ingresoReal - (seguridad + inversion + gastosBase);
+
+      addMovimiento({
+        fecha,
+        unidad: 'SM DIGITALS',
+        tipo_movimiento: 'Ingreso',
+        categoria: 'Ventas',
+        subcategoria: 'Proyecto',
+        cliente_proveedor: inc.desc,
+        descripcion: inc.desc,
+        metodo_pago: 'Transferencia',
+        monto: ingresoReal,
+        recurrente: false,
+        estado: 'Pagado',
+        impacto: 'Core',
+        cuenta: 'Bancolombia'
+      } as any);
+
+      if (seguridad > 0) addTransferencia({ fromSpaceId: baseSpaceId, toSpaceId: SEGURIDAD, monto: seguridad, fecha, descripcion: `Seguridad (15%): ${inc.desc}` });
+      if (inversion > 0) addTransferencia({ fromSpaceId: baseSpaceId, toSpaceId: INVERSION, monto: inversion, fecha, descripcion: `Inversión (25%): ${inc.desc}` });
+      if (gastosBase > 0) addTransferencia({ fromSpaceId: baseSpaceId, toSpaceId: GASTOS_BASE, monto: gastosBase, fecha, descripcion: `Gastos Base (50%): ${inc.desc}` });
+      if (caprichos > 0) addTransferencia({ fromSpaceId: baseSpaceId, toSpaceId: CAPRICHOS, monto: caprichos, fecha, descripcion: `Caprichos (10%): ${inc.desc}` });
+    });
+
+
+    const julyExpenses = [
+      { desc: "clases boxeo", monto: 230000, spaceId: GASTOS_BASE, subcat: "Deporte" },
+      { desc: "airbnb", monto: 640000, spaceId: GASTOS_BASE, subcat: "Vivienda" },
+      { desc: "cine", monto: 150000, spaceId: CAPRICHOS, subcat: "Entretenimiento" },
+      { desc: "regalo mama", monto: 180000, spaceId: CAPRICHOS, subcat: "Regalos" },
+      { desc: "pago comdia restauranet", monto: 140000, spaceId: CAPRICHOS, subcat: "Restaurantes" },
+      { desc: "comida", monto: 50000, spaceId: GASTOS_BASE, subcat: "Alimentación" }
+    ];
+
+    julyExpenses.forEach((exp) => {
+      addMovimiento({
+        space_id: exp.spaceId,
+        fecha,
+        unidad: 'SM DIGITALS',
+        tipo_movimiento: 'Gasto',
+        categoria: 'Gastos Fijos',
+        subcategoria: exp.subcat,
+        cliente_proveedor: exp.desc,
+        descripcion: exp.desc,
+        metodo_pago: 'Tarjeta de Crédito',
+        monto: exp.monto,
+        recurrente: false,
+        estado: 'Pagado',
+        impacto: 'Real',
+        cuenta: 'Bancolombia'
+      } as any);
+    });
+
+    window.localStorage.setItem('july_incomes_2026', 'true');
+    alert('Ingresos y Gastos de Julio registrados correctamente.');
+    window.location.reload();
+
+  }, [addMovimiento, addTransferencia]);
 
   const kpis = [
     { label: 'Ingresos Periodo', value: stats.periodIncome, icon: TrendingUp, color: 'text-brand-income', bg: 'bg-brand-income/10', border: 'border-brand-income/20', shadow: 'shadow-brand-income/5' },
