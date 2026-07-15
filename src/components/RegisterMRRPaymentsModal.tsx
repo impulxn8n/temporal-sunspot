@@ -10,7 +10,7 @@ interface RegisterMRRPaymentsModalProps {
 export const RegisterMRRPaymentsModal: React.FC<RegisterMRRPaymentsModalProps> = ({ open, onClose }) => {
   const { clientesMRR, registerMRRPayment } = useFinance();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [customAmounts, setCustomAmounts] = useState<Record<string, number>>({});
+  const [customAmounts, setCustomAmounts] = useState<Record<string, string>>({});
   const [shouldDistribute, setShouldDistribute] = useState(false);
 
   const activos = useMemo(() => clientesMRR.filter(c => c.estado === 'Activo'), [clientesMRR]);
@@ -19,7 +19,11 @@ export const RegisterMRRPaymentsModal: React.FC<RegisterMRRPaymentsModalProps> =
     return Array.from(selectedIds).reduce((sum, id) => {
       const cliente = activos.find(c => c.id === id);
       if (!cliente) return sum;
-      const amount = customAmounts[id] !== undefined ? customAmounts[id] : cliente.valor_mensual;
+      let amount = cliente.valor_mensual;
+      if (customAmounts[id] !== undefined) {
+        const raw = String(customAmounts[id]).replace(/\D/g, '');
+        amount = raw ? parseInt(raw, 10) : 0;
+      }
       return sum + amount;
     }, 0);
   }, [selectedIds, activos, customAmounts]);
@@ -38,7 +42,12 @@ export const RegisterMRRPaymentsModal: React.FC<RegisterMRRPaymentsModalProps> =
 
   const handleRegisterAll = () => {
     selectedIds.forEach(id => {
-      const amount = customAmounts[id];
+      const cliente = activos.find(c => c.id === id);
+      let amount = cliente?.valor_mensual || 0;
+      if (customAmounts[id] !== undefined) {
+        const raw = String(customAmounts[id]).replace(/\D/g, '');
+        amount = raw ? parseInt(raw, 10) : 0;
+      }
       registerMRRPayment(id, shouldDistribute, amount);
     });
     setSelectedIds(new Set());
@@ -47,11 +56,13 @@ export const RegisterMRRPaymentsModal: React.FC<RegisterMRRPaymentsModalProps> =
   };
 
   const handleAmountChange = (id: string, val: string) => {
-    const num = parseInt(val.replace(/\D/g, ''), 10);
-    setCustomAmounts(prev => ({
-      ...prev,
-      [id]: isNaN(num) ? 0 : num
-    }));
+    const raw = val.replace(/\D/g, '');
+    if (!raw) {
+      setCustomAmounts(prev => ({ ...prev, [id]: '' }));
+    } else {
+      const num = parseInt(raw, 10);
+      setCustomAmounts(prev => ({ ...prev, [id]: num.toLocaleString('es-CO') }));
+    }
   };
 
   const toggleAll = () => {
@@ -130,7 +141,7 @@ export const RegisterMRRPaymentsModal: React.FC<RegisterMRRPaymentsModalProps> =
                       <span className="absolute left-2 top-1/2 -translate-y-1/2 text-brand-primary font-black">$</span>
                       <input
                         type="text"
-                        value={(customAmounts[cliente.id] !== undefined ? customAmounts[cliente.id] : cliente.valor_mensual).toLocaleString('es-CO')}
+                        value={customAmounts[cliente.id] !== undefined ? customAmounts[cliente.id] : cliente.valor_mensual.toLocaleString('es-CO')}
                         onChange={(e) => handleAmountChange(cliente.id, e.target.value)}
                         className="bg-brand-primary/10 border border-brand-primary/20 text-brand-primary font-black rounded-lg pl-5 pr-2 py-1 text-sm w-28 text-right outline-none focus:border-brand-primary/50"
                       />

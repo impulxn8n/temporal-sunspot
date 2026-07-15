@@ -7,10 +7,10 @@ const handle = (error: any, context: string) => {
 
 export const db = {
   movimientos: {
-    load: async (): Promise<Movimiento[]> => {
+    load: async (): Promise<Movimiento[] | null> => {
       const { data, error } = await supabase.from('movimientos').select('*');
       handle(error, 'load movimientos');
-      return (data as Movimiento[]) ?? [];
+      return error ? null : (data as Movimiento[]);
     },
     replace: async (rows: Movimiento[]) => {
       const { error: delErr } = await supabase.from('movimientos').delete().neq('id', '__none__');
@@ -35,10 +35,10 @@ export const db = {
   },
 
   clientesMRR: {
-    load: async (): Promise<ClienteMRR[]> => {
+    load: async (): Promise<ClienteMRR[] | null> => {
       const { data, error } = await supabase.from('clientes_mrr').select('*');
       handle(error, 'load clientes_mrr');
-      return (data as ClienteMRR[]) ?? [];
+      return error ? null : (data as ClienteMRR[]);
     },
     upsert: async (row: ClienteMRR) => {
       const { error } = await supabase.from('clientes_mrr').upsert(row, { onConflict: 'id' });
@@ -51,10 +51,10 @@ export const db = {
   },
 
   proyectos: {
-    load: async (): Promise<Proyecto[]> => {
+    load: async (): Promise<Proyecto[] | null> => {
       const { data, error } = await supabase.from('proyectos').select('*');
       handle(error, 'load proyectos');
-      return (data as Proyecto[]) ?? [];
+      return error ? null : (data as Proyecto[]);
     },
     upsert: async (row: Proyecto) => {
       const { error } = await supabase.from('proyectos').upsert(row, { onConflict: 'id' });
@@ -71,10 +71,10 @@ export const db = {
   },
 
   deudas: {
-    load: async (): Promise<Deuda[]> => {
+    load: async (): Promise<Deuda[] | null> => {
       const { data, error } = await supabase.from('deudas').select('*');
       handle(error, 'load deudas');
-      return (data as Deuda[]) ?? [];
+      return error ? null : (data as Deuda[]);
     },
     update: async (id: string, updates: Partial<Deuda>) => {
       const { error } = await supabase.from('deudas').update(updates).eq('id', id);
@@ -91,10 +91,10 @@ export const db = {
   },
 
   cuentasPorCobrar: {
-    load: async (): Promise<CuentaPorCobrar[]> => {
+    load: async (): Promise<CuentaPorCobrar[] | null> => {
       const { data, error } = await supabase.from('cuentas_por_cobrar').select('*');
       handle(error, 'load cuentas_por_cobrar');
-      return (data as CuentaPorCobrar[]) ?? [];
+      return error ? null : (data as CuentaPorCobrar[]);
     },
     upsert: async (row: CuentaPorCobrar) => {
       const { error } = await supabase.from('cuentas_por_cobrar').upsert(row, { onConflict: 'id' });
@@ -111,10 +111,10 @@ export const db = {
   },
 
   presupuestos: {
-    load: async (): Promise<Presupuesto[]> => {
+    load: async (): Promise<Presupuesto[] | null> => {
       const { data, error } = await supabase.from('presupuestos').select('*');
       handle(error, 'load presupuestos');
-      return (data as Presupuesto[]) ?? [];
+      return error ? null : (data as Presupuesto[]);
     },
     upsert: async (row: Presupuesto) => {
       const { error } = await supabase.from('presupuestos').upsert(row, { onConflict: 'id' });
