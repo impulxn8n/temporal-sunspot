@@ -268,7 +268,7 @@ export const Dashboard: React.FC = () => {
     const runMigration = async () => {
       try {
         const allDebts = await db.deudas.load();
-        for (const debt of allDebts) {
+        for (const debt of allDebts || []) {
           await db.deudas.delete(debt.id);
         }
 

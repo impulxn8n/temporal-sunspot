@@ -117,35 +117,23 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
           db.cuentasPorCobrar.load(),
         ]);
 
-        // FusiÃ³n (Merge) inteligente para no perder datos creados offline en el celular
-        const mergeData = (dbArray: any[], localArray: any[]) => {
-          if (!dbArray || dbArray.length === 0) return { merged: localArray, missingInDb: localArray };
-          const dbMap = new Map(dbArray.map(item => [item.id, item]));
-          const missingInDb = localArray.filter(item => !dbMap.has(item.id));
-          return { merged: [...dbArray, ...missingInDb], missingInDb };
-        };
+        if (movs) setMovimientos(movs as any);
+        else setMovimientos(local.movimientos || []);
 
-        const movsMerge = mergeData(movs, local.movimientos || []);
-        setMovimientos(movsMerge.merged);
-        if (movsMerge.missingInDb.length > 0) db.movimientos.upsert(movsMerge.missingInDb).catch(console.error);
+        if (clients) setClientesMRR(clients as any);
+        else setClientesMRR(local.clientesMRR || []);
 
-        const clientsMerge = mergeData(clients, local.clientesMRR || []);
-        setClientesMRR(clientsMerge.merged);
-        if (clientsMerge.missingInDb.length > 0) clientsMerge.missingInDb.forEach((c: any) => db.clientesMRR.upsert(c).catch(console.error));
+        if (debts) setDeudas(debts as any);
+        else setDeudas(local.deudas || []);
 
-        const debtsMerge = mergeData(debts, local.deudas || []);
-        setDeudas(debtsMerge.merged);
-        if (debtsMerge.missingInDb.length > 0) debtsMerge.missingInDb.forEach((d: any) => db.deudas.upsert(d).catch(console.error));
+        if (cuentas) setCuentasPorCobrar(cuentas as any);
+        else setCuentasPorCobrar(local.cuentasPorCobrar || []);
 
-        const cuentasMerge = mergeData(cuentas, local.cuentasPorCobrar || []);
-        setCuentasPorCobrar(cuentasMerge.merged);
-        if (cuentasMerge.missingInDb.length > 0) cuentasMerge.missingInDb.forEach((c: any) => db.cuentasPorCobrar.upsert(c).catch(console.error));
+        if (projs) setProyectos(projs as any);
+        else setProyectos(local.proyectos || []);
 
-        const projsMerge = mergeData(projs, local.proyectos || []);
-        setProyectos(projsMerge.merged);
-        if (projsMerge.missingInDb.length > 0) projsMerge.missingInDb.forEach((p: any) => db.proyectos.upsert(p).catch(console.error));
-
-        setPresupuestos(budgets);
+        if (budgets) setPresupuestos(budgets as any);
+        else setPresupuestos(local.presupuestos || []);
       } catch (err) {
         console.error('[Bootstrap] Supabase failed, falling back to localStorage:', err);
         setMovimientos(local.movimientos);
