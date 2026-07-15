@@ -234,6 +234,32 @@ export const Dashboard: React.FC = () => {
     }
   }, [movimientos, balancesBySpace, addMovimiento]);
 
+
+  useEffect(() => {
+    if (window.localStorage.getItem('inversion_600k_july') === 'true') return;
+    
+    addMovimiento({
+        space_id: 'sp_bols_inversion',
+        fecha: new Date().toISOString().split('T')[0],
+        unidad: 'SM DIGITALS',
+        estado: 'Pagado',
+        impacto: 'Real',
+        cuenta: 'Bancolombia',
+        tipo_movimiento: 'Ingreso',
+        monto: 600000,
+        categoria: 'Inversiones',
+        subcategoria: 'Aporte',
+        cliente_proveedor: 'Aporte Extra',
+        descripcion: 'Aporte adicional a inversión',
+        metodo_pago: 'Transferencia',
+        recurrente: false
+    } as any);
+
+    window.localStorage.setItem('inversion_600k_july', 'true');
+    alert('Se han sumado $600.000 al bolsillo de Inversión.');
+    window.location.reload();
+  }, [addMovimiento]);
+
   const kpis = [
     { label: 'Ingresos Periodo', value: stats.periodIncome, icon: TrendingUp, color: 'text-brand-income', bg: 'bg-brand-income/10', border: 'border-brand-income/20', shadow: 'shadow-brand-income/5' },
     { label: 'Gastos Periodo', value: stats.periodExpenses, icon: TrendingDown, color: 'text-brand-expense', bg: 'bg-brand-expense/10', border: 'border-brand-expense/20', shadow: 'shadow-brand-expense/5' },
