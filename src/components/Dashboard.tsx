@@ -263,7 +263,7 @@ export const Dashboard: React.FC = () => {
 
 
   useEffect(() => {
-    if (window.localStorage.getItem('debts_migration_v2') === 'true') return;
+    if (window.localStorage.getItem('debts_migration_v3') === 'true') return;
     
     const runMigration = async () => {
       try {
@@ -303,8 +303,9 @@ export const Dashboard: React.FC = () => {
           await db.deudas.upsert(debt as any);
         }
 
-        window.localStorage.setItem('debts_migration_v2', 'true');
-        alert('Deudas migradas correctamente.');
+        window.localStorage.setItem('finance_v22_deudas', JSON.stringify(newDebts));
+        window.localStorage.setItem('debts_migration_v3', 'true');
+        alert('Deudas migradas correctamente. Ahora solo verás Tio Victor y Crédito de Consumo.');
         window.location.reload();
       } catch (err) {
         console.error('Migration error:', err);
