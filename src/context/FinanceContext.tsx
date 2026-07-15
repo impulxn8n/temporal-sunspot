@@ -598,10 +598,11 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const b = balancesBySpace[id];
       agg.income += b.income;
       agg.expenses += b.expenses;
-      // Las transferencias internas se cancelan en la vista global
+      agg.balance += b.balance;
+      agg.transfersIn += b.transfersIn;
+      agg.transfersOut += b.transfersOut;
     }
     agg.netCashFlow = agg.income - agg.expenses;
-    agg.balance = agg.netCashFlow;
     return agg;
   }, [balancesBySpace]);
 
