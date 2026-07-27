@@ -6,6 +6,7 @@ import { POSForm } from './components/POSForm';
 import { ClientesMRR } from './components/ClientesMRR';
 import { Proyectos } from './components/Proyectos';
 import { Deudas } from './components/Deudas';
+import { CuentasPorCobrar } from './components/CuentasPorCobrar';
 import { Presupuesto } from './components/Presupuesto';
 import { Finanzita } from './components/Finanzita';
 import { Login } from './components/Login';
@@ -36,6 +37,7 @@ const AppContent = () => {
           <Route path="/clientes" element={<ClientesMRR />} />
           <Route path="/proyectos" element={<Proyectos />} />
           <Route path="/deudas" element={<Deudas />} />
+          <Route path="/cuentas-por-cobrar" element={<div className="p-4"><CuentasPorCobrar /></div>} />
           <Route path="/presupuesto" element={<Presupuesto />} />
           <Route path="/finanzita" element={<Finanzita />} />
         </Routes>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Receipt, Users, Briefcase, CreditCard, PieChart, PlusCircle, Sparkles, Calendar, Trash2, Cloud, RefreshCw, Menu, X, LogOut, CloudDownload, Database, ArrowLeftRight } from 'lucide-react';
+import { LayoutDashboard, Receipt, Users, Briefcase, CreditCard, PieChart, PlusCircle, Sparkles, Calendar, Trash2, Cloud, RefreshCw, Menu, X, LogOut, CloudDownload, Database, ArrowLeftRight, ArrowDownRight } from 'lucide-react';
 import { useGoogleAuth } from '../hooks/useGoogleAuth';
 import { deleteFinanceCalendar } from '../lib/googleCalendar';
 import { useFinance } from '../context/FinanceContext';
@@ -13,6 +13,7 @@ const navItems = [
   { name: 'Clientes MRR', path: '/clientes', icon: Users },
   { name: 'Proyectos', path: '/proyectos', icon: Briefcase },
   { name: 'Deudas', path: '/deudas', icon: CreditCard },
+  { name: 'Por Cobrar', path: '/cuentas-por-cobrar', icon: ArrowDownRight },
   { name: 'Presupuesto', path: '/presupuesto', icon: PieChart },
   { name: 'Finanzita IA', path: '/finanzita', icon: Sparkles, special: true },
 ];

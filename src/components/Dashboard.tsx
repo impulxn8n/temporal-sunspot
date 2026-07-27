@@ -10,7 +10,7 @@ import { PeriodSelector } from './PeriodSelector';
 import { SpaceSelector } from './SpaceSelector';
 import { BalanceCards } from './BalanceCards';
 import { CashFlowProjection } from './CashFlowProjection';
-import { CuentasPorCobrar } from './CuentasPorCobrar';
+
 
 export const Dashboard: React.FC = () => {
   const { stats, movimientos, addMovimiento, removeMovimiento, balancesBySpace, addTransferencia } = useFinance();
@@ -450,10 +450,7 @@ export const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Cuentas por Cobrar */}
-      <div className="glass-card p-6 lg:p-10 rounded-[40px] shadow-2xl">
-        <CuentasPorCobrar />
-      </div>
+
 
       {/* Cash Flow Projection */}
       <CashFlowProjection />
