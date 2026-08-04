@@ -138,7 +138,14 @@ export const DineroPrestado: React.FC = () => {
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  const cuentasNormales = cuentasPorCobrar.filter(c => (c.descripcion || '').startsWith('[PRESTAMO]'));
+  const isPrestamo = (c: any) => {
+    const desc = (c.descripcion || '').toLowerCase();
+    const cliente = (c.cliente || '').toLowerCase();
+    const knownNames = ['ana maria', 'juan ocvhoa', 'daniel gil'];
+    return desc.startsWith('[prestamo]') || knownNames.some(name => cliente.includes(name));
+  };
+
+  const cuentasNormales = cuentasPorCobrar.filter(isPrestamo);
 
   const totalPendiente = cuentasNormales
     .filter(c => c.estado === 'Pendiente')
