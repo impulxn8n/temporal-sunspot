@@ -141,17 +141,17 @@ export const DineroPrestado: React.FC = () => {
   const isPrestamo = (c: any) => {
     const desc = (c.descripcion || '').toLowerCase();
     const cliente = (c.cliente || '').toLowerCase();
-    const knownNames = ['ana maria', 'juan ocvhoa', 'daniel gil'];
-    return desc.startsWith('[prestamo]') || knownNames.some(name => cliente.includes(name));
+    const knownNames = ['ana', 'maria', 'juan', 'ochoa', 'ocvhoa', 'daniel', 'gil', 'prestamo'];
+    return desc.startsWith('[prestamo]') || knownNames.some(name => cliente.includes(name) || desc.includes(name));
   };
 
   const cuentasNormales = cuentasPorCobrar.filter(isPrestamo);
 
   const totalPendiente = cuentasNormales
-    .filter(c => c.estado === 'Pendiente')
-    .reduce((sum, c) => sum + c.monto, 0);
+    .filter(c => c.estado !== 'Cobrado')
+    .reduce((sum, c) => sum + (c.monto - (c.monto_cobrado || 0)), 0);
 
-  const totalCobrado = cuentasNormales.reduce((sum, c) => sum + c.monto_cobrado, 0);
+  const totalCobrado = cuentasNormales.reduce((sum, c) => sum + (c.monto_cobrado || 0), 0);
 
   return (
     <div className="space-y-5">
