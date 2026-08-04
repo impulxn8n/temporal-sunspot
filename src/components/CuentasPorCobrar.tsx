@@ -65,7 +65,7 @@ const AddCuentaModal: React.FC<AddCuentaModalProps> = ({ open, onClose }) => {
               required
               value={cliente}
               onChange={e => setCliente(e.target.value)}
-              placeholder="Ej: Juan Tasama"
+              placeholder="Ej: Empresa S.A."
               className="w-full bg-[#050508] border border-white/5 rounded-xl py-3 px-3 text-white text-xs focus:outline-none focus:border-emerald-500/50"
             />
           </div>
