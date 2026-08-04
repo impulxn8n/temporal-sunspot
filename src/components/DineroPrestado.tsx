@@ -59,7 +59,16 @@ const AddPrestamoModal: React.FC<AddPrestamoModalProps> = ({ open, onClose }) =>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Deudor *</label>
+            <div className="flex items-center justify-between">
+                <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Deudor *</label>
+                <button
+                  type="button"
+                  onClick={() => setDeudor('Préstamo Interno (Bolsillos)')}
+                  className="text-[9px] font-black text-emerald-400 hover:text-emerald-300 uppercase tracking-widest bg-emerald-500/10 px-2 py-1 rounded-md"
+                >
+                  Soy yo mismo
+                </button>
+              </div>
             <input
               type="text"
               required
