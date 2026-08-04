@@ -140,9 +140,9 @@ export const DineroPrestado: React.FC = () => {
 
   const isPrestamo = (c: any) => {
     const desc = (c.descripcion || '').toLowerCase();
-    const cliente = (c.cliente || '').toLowerCase();
-    const knownNames = ['ana', 'maria', 'juan', 'ochoa', 'ocvhoa', 'daniel', 'gil', 'prestamo'];
-    return desc.startsWith('[prestamo]') || knownNames.some(name => cliente.includes(name) || desc.includes(name));
+    const cliente = (c.cliente || '').toLowerCase().trim();
+    const specificLoanNames = ['ana maria', 'juan ochoa', 'juan ocvhoa', 'daniel gil'];
+    return desc.startsWith('[prestamo]') || specificLoanNames.includes(cliente);
   };
 
   const cuentasNormales = cuentasPorCobrar.filter(isPrestamo);
