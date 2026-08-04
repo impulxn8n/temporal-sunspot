@@ -7,6 +7,7 @@ import { ClientesMRR } from './components/ClientesMRR';
 import { Proyectos } from './components/Proyectos';
 import { Deudas } from './components/Deudas';
 import { CuentasPorCobrar } from './components/CuentasPorCobrar';
+import { DineroPrestado } from './components/DineroPrestado';
 import { GastosFijos } from './components/GastosFijos';
 import { Presupuesto } from './components/Presupuesto';
 import { Finanzita } from './components/Finanzita';
@@ -39,6 +40,7 @@ const AppContent = () => {
           <Route path="/proyectos" element={<Proyectos />} />
           <Route path="/deudas" element={<Deudas />} />
           <Route path="/cuentas-por-cobrar" element={<div className="p-4"><CuentasPorCobrar /></div>} />
+          <Route path="/dinero-prestado" element={<div className="p-4"><DineroPrestado /></div>} />
           <Route path="/gastos-fijos" element={<div className="p-4"><GastosFijos /></div>} />
           <Route path="/presupuesto" element={<Presupuesto />} />
           <Route path="/finanzita" element={<Finanzita />} />

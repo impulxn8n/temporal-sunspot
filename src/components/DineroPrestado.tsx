@@ -2,14 +2,14 @@ import React, { useState } from 'react';
 import { useFinance } from '../context/FinanceContext';
 import { X, Plus, CheckCircle, Clock, DollarSign, Trash2 } from 'lucide-react';
 
-interface AddCuentaModalProps {
+interface AddPrestamoModalProps {
   open: boolean;
   onClose: () => void;
 }
 
-const AddCuentaModal: React.FC<AddCuentaModalProps> = ({ open, onClose }) => {
+const AddPrestamoModal: React.FC<AddPrestamoModalProps> = ({ open, onClose }) => {
   const { addCuentaPorCobrar } = useFinance();
-  const [cliente, setCliente] = useState('');
+  const [cliente, setDeudor] = useState('');
   const [monto, setMonto] = useState<number>(0);
   const [descripcion, setDescripcion] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -25,13 +25,13 @@ const AddCuentaModal: React.FC<AddCuentaModalProps> = ({ open, onClose }) => {
     addCuentaPorCobrar({
       cliente: cliente.trim(),
       monto,
-      descripcion: descripcion.trim() || 'Servicio profesional',
+      descripcion: '[PRESTAMO] ' + (descripcion.trim() || 'Préstamo'),
       fecha_emision: new Date().toISOString().split('T')[0],
       estado: 'Pendiente',
       monto_cobrado: 0,
     });
 
-    setCliente('');
+    setDeudor('');
     setMonto(0);
     setDescripcion('');
     onClose();
@@ -59,12 +59,12 @@ const AddCuentaModal: React.FC<AddCuentaModalProps> = ({ open, onClose }) => {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Cliente *</label>
+            <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Deudor *</label>
             <input
               type="text"
               required
               value={cliente}
-              onChange={e => setCliente(e.target.value)}
+              onChange={e => setDeudor(e.target.value)}
               placeholder="Ej: Juan Tasama"
               className="w-full bg-[#050508] border border-white/5 rounded-xl py-3 px-3 text-white text-xs focus:outline-none focus:border-emerald-500/50"
             />
@@ -124,12 +124,12 @@ const AddCuentaModal: React.FC<AddCuentaModalProps> = ({ open, onClose }) => {
   );
 };
 
-export const CuentasPorCobrar: React.FC = () => {
+export const DineroPrestado: React.FC = () => {
   const { cuentasPorCobrar, marcarCuentaPorCobrar, removeCuentaPorCobrar } = useFinance();
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  const cuentasNormales = cuentasPorCobrar.filter(c => !(c.descripcion || '').startsWith('[PRESTAMO]'));
+  const cuentasNormales = cuentasPorCobrar.filter(c => (c.descripcion || '').startsWith('[PRESTAMO]'));
 
   const totalPendiente = cuentasNormales
     .filter(c => c.estado === 'Pendiente')
@@ -145,8 +145,8 @@ export const CuentasPorCobrar: React.FC = () => {
             <DollarSign size={18} className="text-emerald-400" />
           </div>
           <div>
-            <h3 className="text-xs font-black text-white uppercase tracking-widest">Cuentas por Cobrar</h3>
-            <p className="text-[9px] text-slate-500 font-bold">Dinero que te deben</p>
+            <h3 className="text-xs font-black text-white uppercase tracking-widest">Dinero Prestado</h3>
+            <p className="text-[9px] text-slate-500 font-bold">Dinero que prestaste o te debes a ti mismo</p>
           </div>
         </div>
         <button
@@ -175,7 +175,7 @@ export const CuentasPorCobrar: React.FC = () => {
       <div className="space-y-2">
         {cuentasNormales.length === 0 ? (
           <div className="text-center py-8 text-slate-500">
-            <p className="text-[11px] font-bold">No hay cuentas por cobrar</p>
+            <p className="text-[11px] font-bold">No hay préstamos activos</p>
           </div>
         ) : (
           cuentasNormales.map(cuenta => (
@@ -186,7 +186,7 @@ export const CuentasPorCobrar: React.FC = () => {
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1">
                   <p className="text-sm font-black text-white">{cuenta.cliente}</p>
-                  <p className="text-[9px] text-slate-500 font-bold">{cuenta.descripcion}</p>
+                  <p className="text-[9px] text-slate-500 font-bold">{cuenta.descripcion?.replace('[PRESTAMO] ', '')}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   {cuenta.estado === 'Cobrado' && <CheckCircle size={16} className="text-emerald-400" />}
@@ -201,7 +201,7 @@ export const CuentasPorCobrar: React.FC = () => {
                   onClick={() => setExpandedId(expandedId === cuenta.id ? null : cuenta.id)}
                   className="text-[9px] font-black text-emerald-400 hover:text-emerald-300 uppercase tracking-widest"
                 >
-                  {expandedId === cuenta.id ? 'Cerrar' : 'Marcar cobro'}
+                  {expandedId === cuenta.id ? 'Cerrar' : 'Marcar abono'}
                 </button>
               </div>
 
@@ -245,7 +245,7 @@ export const CuentasPorCobrar: React.FC = () => {
         )}
       </div>
 
-      <AddCuentaModal open={addModalOpen} onClose={() => setAddModalOpen(false)} />
+      <AddPrestamoModal open={addModalOpen} onClose={() => setAddModalOpen(false)} />
     </div>
   );
 };
