@@ -137,6 +137,7 @@ export const DineroPrestado: React.FC = () => {
   const { cuentasPorCobrar, marcarCuentaPorCobrar, removeCuentaPorCobrar } = useFinance();
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [customAmounts, setCustomAmounts] = useState<Record<string, number>>({});
 
   const isPrestamo = (c: any) => {
     const desc = (c.descripcion || '').toLowerCase();
@@ -235,14 +236,43 @@ export const DineroPrestado: React.FC = () => {
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-2">
-                    {[cuenta.monto * 0.25, cuenta.monto * 0.5, cuenta.monto].map((amount, i) => (
+                  {/* Campo de abono personalizado */}
+                  <div className="space-y-2">
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Registrar Abono Personalizado</p>
+                    <div className="flex gap-2">
+                      <div className="relative flex-1">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-emerald-400 font-bold text-xs">$</span>
+                        <input
+                          type="number"
+                          placeholder="Monto a abonar..."
+                          value={customAmounts[cuenta.id] || ''}
+                          onChange={e => setCustomAmounts({ ...customAmounts, [cuenta.id]: parseFloat(e.target.value) || 0 })}
+                          className="w-full bg-slate-900 border border-white/10 rounded-xl py-2 pl-7 pr-3 text-white text-xs focus:outline-none focus:border-emerald-500/50"
+                        />
+                      </div>
+                      <button
+                        onClick={() => {
+                          const amount = customAmounts[cuenta.id] || 0;
+                          if (amount > 0) {
+                            marcarCuentaPorCobrar(cuenta.id, amount);
+                            setCustomAmounts({ ...customAmounts, [cuenta.id]: 0 });
+                          }
+                        }}
+                        className="bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider hover:bg-emerald-500 transition-all shadow-lg shadow-emerald-600/20"
+                      >
+                        Abonar
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2 pt-1">
+                    {[cuenta.monto * 0.25, cuenta.monto * 0.5, cuenta.monto - cuenta.monto_cobrado].map((amount, i) => (
                       <button
                         key={i}
                         onClick={() => marcarCuentaPorCobrar(cuenta.id, amount)}
-                        className="text-[9px] font-black bg-emerald-600/20 border border-emerald-500/30 text-emerald-400 py-2 rounded-lg hover:bg-emerald-600/30 transition-all"
+                        className="text-[9px] font-black bg-emerald-600/10 border border-emerald-500/20 text-emerald-400 py-1.5 rounded-lg hover:bg-emerald-600/20 transition-all"
                       >
-                        +${(amount / 1000).toFixed(0)}k
+                        {i === 2 ? 'Liquidar Todo' : `+$${(amount / 1000).toFixed(0)}k`}
                       </button>
                     ))}
                   </div>
