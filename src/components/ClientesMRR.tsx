@@ -1,18 +1,20 @@
 import React from 'react';
 import { useFinance } from '../hooks/useFinance';
-import { Banknote, Calendar, Bell, RefreshCw, Plus, Wallet, Shield, TrendingUp, Check, Trash2 } from 'lucide-react';
+import { Banknote, Calendar, Bell, RefreshCw, Plus, Wallet, Shield, TrendingUp, Check, Trash2, Edit3 } from 'lucide-react';
 import type { ClienteMRR } from '../types';
 import { useGoogleAuth } from '../hooks/useGoogleAuth';
 import { getOrCreateFinanceCalendar, createPaymentEvent } from '../lib/googleCalendar';
 import { useState } from 'react';
 import { AddClienteMRRModal } from './AddClienteMRRModal';
 import { RegisterMRRPaymentsModal } from './RegisterMRRPaymentsModal';
+import { EditClienteMRRModal } from './EditClienteMRRModal';
 import { calcularDistribucionCliente, calcularDistribucionMensualMRR } from '../lib/clienteCalc';
 
 export const ClientesMRR: React.FC = () => {
   const { clientesMRR, registerMRRPayment, removeClienteMRR } = useFinance();
   const [showAdd, setShowAdd] = useState(false);
   const [showRegisterPayments, setShowRegisterPayments] = useState(false);
+  const [editingCliente, setEditingCliente] = useState<ClienteMRR | null>(null);
 
   const totalMRR = clientesMRR.filter(c => c.estado === 'Activo').reduce((acc, c) => acc + c.valor_mensual, 0);
   const totalPausado = clientesMRR.filter(c => c.estado === 'Pausado').reduce((acc, c) => acc + c.valor_mensual, 0);
@@ -195,6 +197,13 @@ export const ClientesMRR: React.FC = () => {
                   {cliente.estado}
                 </span>
                 <button
+                  onClick={() => setEditingCliente(cliente)}
+                  title="Editar cliente y día de cobro"
+                  className="bg-amber-500/10 text-amber-400 p-1.5 rounded-full hover:bg-amber-500 hover:text-black transition-all"
+                >
+                  <Edit3 size={12} />
+                </button>
+                <button
                   onClick={() => {
                     if(window.confirm('¿Seguro que deseas eliminar este cliente MRR?')) {
                       removeClienteMRR(cliente.id);
@@ -274,10 +283,11 @@ export const ClientesMRR: React.FC = () => {
                   href={getGoogleCalendarUrl(cliente)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="py-3 lg:py-4 bg-brand-gold/5 border border-brand-gold/20 hover:bg-brand-gold hover:text-black text-brand-gold text-[8px] lg:text-[9px] font-black rounded-xl lg:rounded-2xl transition-all uppercase tracking-widest flex items-center justify-center gap-2 group/btn shadow-xl shadow-brand-gold/5"
+                  title="Agregar recordatorio mensual a tu Google Calendar personal"
+                  className="py-3 lg:py-4 bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500 hover:text-black text-amber-400 text-[8px] lg:text-[9px] font-black rounded-xl lg:rounded-2xl transition-all uppercase tracking-widest flex items-center justify-center gap-1.5 group/btn shadow-xl shadow-amber-500/10"
                 >
                   <Bell size={12} className="group-hover/btn:animate-bounce" />
-                  <span className="hidden sm:inline">Calendar</span>
+                  <span>Calendar</span>
                 </a>
               )}
             </div>
@@ -288,6 +298,7 @@ export const ClientesMRR: React.FC = () => {
 
       <AddClienteMRRModal open={showAdd} onClose={() => setShowAdd(false)} />
       <RegisterMRRPaymentsModal open={showRegisterPayments} onClose={() => setShowRegisterPayments(false)} />
+      <EditClienteMRRModal cliente={editingCliente} open={!!editingCliente} onClose={() => setEditingCliente(null)} />
     </div>
   );
 };
