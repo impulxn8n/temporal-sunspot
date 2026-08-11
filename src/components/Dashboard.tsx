@@ -16,7 +16,7 @@ export const Dashboard: React.FC = () => {
   const { stats, movimientos, addMovimiento, removeMovimiento, balancesBySpace, addTransferencia } = useFinance();
 
   useEffect(() => {
-    if (window.localStorage.getItem('adjusted_v4') === 'true') return;
+    if (window.localStorage.getItem('adjusted_v5_real') === 'true') return;
     if (!movimientos || !balancesBySpace || Object.keys(balancesBySpace).length === 0) return;
     
     // First, find and delete the bad ones
@@ -27,10 +27,10 @@ export const Dashboard: React.FC = () => {
     }
 
     const targets: Record<string, number> = {
-        'sp_bols_emergencia': 860700,
-        'sp_bols_operativo': 1417000,
-        'sp_bols_caprichos': 173557,
-        'sp_bols_inversion': 434500
+        'sp_bols_emergencia': 255941,
+        'sp_bols_operativo': 0,
+        'sp_bols_caprichos': 0,
+        'sp_bols_inversion': 1533491
     };
 
     let needsAdjust = false;
@@ -58,7 +58,7 @@ export const Dashboard: React.FC = () => {
         }
     }
     
-    window.localStorage.setItem('adjusted_v4', 'true');
+    window.localStorage.setItem('adjusted_v5_real', 'true');
     if (needsAdjust) {
         alert('¡Saldos corregidos y actualizados!');
         window.location.reload();
