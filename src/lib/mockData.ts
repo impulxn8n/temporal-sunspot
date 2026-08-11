@@ -30,6 +30,36 @@ export const mockSaldoInicial: Movimiento = {
 // Clientes que me deben dinero
 export const mockCuentasPorCobrar: CuentaPorCobrar[] = [
   {
+    id: 'prestamo_yo_mismo_inversion',
+    cliente: 'Préstamo Interno (Bolsillo Inversión)',
+    monto: 920000,
+    fecha_emision: '2026-08-11',
+    descripcion: '[PRESTAMO] Préstamo propio de bolsillo inversión',
+    estado: 'Pendiente',
+    monto_cobrado: 0,
+    created_at: '2026-08-11T11:40:00Z',
+  },
+  {
+    id: 'prestamo_ana_maria_mejia',
+    cliente: 'Ana María Mejía',
+    monto: 2000000,
+    fecha_emision: '2026-08-11',
+    descripcion: '[PRESTAMO] Préstamo personal',
+    estado: 'Pendiente',
+    monto_cobrado: 0,
+    created_at: '2026-08-11T11:40:00Z',
+  },
+  {
+    id: 'prestamo_daniel_gil',
+    cliente: 'Daniel Gil',
+    monto: 591000,
+    fecha_emision: '2026-08-11',
+    descripcion: '[PRESTAMO] Préstamo personal',
+    estado: 'Pendiente',
+    monto_cobrado: 0,
+    created_at: '2026-08-11T11:40:00Z',
+  },
+  {
     id: 'cxc_juan_tasama',
     cliente: 'Juan Tasama',
     monto: 4_900_000,

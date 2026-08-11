@@ -133,8 +133,8 @@ export const CuentasPorCobrar: React.FC = () => {
   const isPrestamo = (c: any) => {
     const desc = (c.descripcion || '').toLowerCase();
     const cliente = (c.cliente || '').toLowerCase().trim();
-    const specificLoanNames = ['ana maria', 'juan ochoa', 'juan ocvhoa', 'daniel gil'];
-    return desc.startsWith('[prestamo]') || specificLoanNames.includes(cliente);
+    const specificLoanKeywords = ['ana maria', 'ana maría', 'mejia', 'mejía', 'juan ochoa', 'juan ocvhoa', 'daniel gil', 'gil', 'inversión', 'inversion', 'bolsillo'];
+    return desc.startsWith('[prestamo]') || specificLoanKeywords.some(kw => cliente.includes(kw));
   };
 
   const cuentasNormales = cuentasPorCobrar.filter(c => !isPrestamo(c));
