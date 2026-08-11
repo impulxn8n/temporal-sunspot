@@ -212,15 +212,28 @@ export const DineroPrestado: React.FC = () => {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-black text-white">${cuenta.monto.toLocaleString('es-CO')}</span>
-                <button
-                  onClick={() => setExpandedId(expandedId === cuenta.id ? null : cuenta.id)}
-                  className="text-[9px] font-black text-emerald-400 hover:text-emerald-300 uppercase tracking-widest"
-                >
-                  {expandedId === cuenta.id ? 'Cerrar' : 'Marcar abono'}
-                </button>
-              </div>
+              {(() => {
+                const saldoRestante = cuenta.monto - (cuenta.monto_cobrado || 0);
+                return (
+                  <div className="flex items-center justify-between pt-1">
+                    <div>
+                      <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Debe (Saldo Pendiente)</p>
+                      <p className="text-base font-black text-emerald-400 tracking-tighter">${saldoRestante.toLocaleString('es-CO')}</p>
+                      {cuenta.monto_cobrado > 0 && (
+                        <p className="text-[9px] font-bold text-slate-500 mt-0.5">
+                          Inicial: ${cuenta.monto.toLocaleString('es-CO')} | Abonado: ${cuenta.monto_cobrado.toLocaleString('es-CO')}
+                        </p>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => setExpandedId(expandedId === cuenta.id ? null : cuenta.id)}
+                      className="text-[9px] font-black text-emerald-400 hover:text-emerald-300 uppercase tracking-widest bg-emerald-500/10 px-3 py-1.5 rounded-xl border border-emerald-500/20"
+                    >
+                      {expandedId === cuenta.id ? 'Cerrar' : 'Marcar abono'}
+                    </button>
+                  </div>
+                );
+              })()}
 
               {expandedId === cuenta.id && (
                 <div className="pt-3 border-t border-white/5 space-y-3">
