@@ -126,8 +126,12 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         if (debts) setDeudas(debts as any);
         else setDeudas(local.deudas || []);
 
-        if (cuentas) setCuentasPorCobrar(cuentas as any);
-        else setCuentasPorCobrar(local.cuentasPorCobrar || []);
+        const localCuentasMap = new Map<string, CuentaPorCobrar>();
+        (local.cuentasPorCobrar || []).forEach(c => localCuentasMap.set(c.id, c));
+        ((cuentas as CuentaPorCobrar[]) || []).forEach(c => localCuentasMap.set(c.id, c));
+        const finalCuentas = Array.from(localCuentasMap.values());
+        setCuentasPorCobrar(finalCuentas);
+        saveData({ cuentasPorCobrar: finalCuentas });
 
         if (projs) setProyectos(projs as any);
         else setProyectos(local.proyectos || []);
@@ -345,7 +349,11 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const addCuentaPorCobrar = useCallback((cuenta: Omit<CuentaPorCobrar, 'id' | 'created_at'>) => {
     const newCuenta: CuentaPorCobrar = { ...cuenta, id: crypto.randomUUID(), created_at: new Date().toISOString() };
-    setCuentasPorCobrar(prev => [...prev, newCuenta]);
+    setCuentasPorCobrar(prev => {
+      const updated = [...prev, newCuenta];
+      saveData({ cuentasPorCobrar: updated });
+      return updated;
+    });
     db.cuentasPorCobrar.upsert(newCuenta).catch(console.error);
     return newCuenta;
   }, []);
@@ -358,12 +366,18 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const newEstado: CuentaPorCobrar['estado'] =
         newCobrado >= cuenta.monto ? 'Cobrado' : newCobrado > 0 ? 'Parcial' : 'Pendiente';
       db.cuentasPorCobrar.update(cuentaId, { monto_cobrado: newCobrado, estado: newEstado }).catch(console.error);
-      return prev.map(c => c.id === cuentaId ? { ...c, monto_cobrado: newCobrado, estado: newEstado } : c);
+      const updated = prev.map(c => c.id === cuentaId ? { ...c, monto_cobrado: newCobrado, estado: newEstado } : c);
+      saveData({ cuentasPorCobrar: updated });
+      return updated;
     });
   }, []);
 
   const removeCuentaPorCobrar = useCallback((cuentaId: string) => {
-    setCuentasPorCobrar(prev => prev.filter(c => c.id !== cuentaId));
+    setCuentasPorCobrar(prev => {
+      const updated = prev.filter(c => c.id !== cuentaId);
+      saveData({ cuentasPorCobrar: updated });
+      return updated;
+    });
     db.cuentasPorCobrar.delete(cuentaId).catch(console.error);
   }, []);
 

@@ -3,10 +3,22 @@ import { useFinance } from '../context/FinanceContext';
 import { ArrowUpRight, ArrowDownRight, Wallet, ArrowLeftRight } from 'lucide-react';
 
 export const BalanceCards: React.FC = () => {
-  const { spaces, balancesBySpace, globalBalance, selectedView, stats } = useFinance();
+  const { spaces, balancesBySpace, globalBalance, selectedView, stats, cuentasPorCobrar } = useFinance();
 
   if (selectedView === 'global') {
     const visibleSpaces = spaces.filter(s => !s.archived);
+
+    const dineroPrestadoTotal = cuentasPorCobrar
+      .filter(c => {
+        const desc = (c.descripcion || '').toLowerCase();
+        const cliente = (c.cliente || '').toLowerCase().trim();
+        const specificLoanNames = ['ana maria', 'juan ochoa', 'juan ocvhoa', 'daniel gil'];
+        return desc.startsWith('[prestamo]') || specificLoanNames.includes(cliente);
+      })
+      .filter(c => c.estado !== 'Cobrado')
+      .reduce((sum, c) => sum + (c.monto - (c.monto_cobrado || 0)), 0);
+
+    const patrimonioNeto = globalBalance.balance + dineroPrestadoTotal;
     return (
       <div className="space-y-6">
         <div className="glass-card p-6 lg:p-8 rounded-[32px] relative overflow-hidden">
@@ -16,13 +28,21 @@ export const BalanceCards: React.FC = () => {
             <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.25em]">Patrimonio Total (Global)</p>
           </div>
           <h2 className="text-3xl lg:text-5xl font-black text-white tracking-tighter relative z-10">
-            ${globalBalance.balance.toLocaleString('es-CO')}
+            ${patrimonioNeto.toLocaleString('es-CO')}
           </h2>
-          <div className="flex flex-wrap gap-6 mt-4 relative z-10">
-            <span className="text-[11px] text-brand-income font-black flex items-center gap-1">
+          <div className="flex flex-wrap gap-4 mt-4 relative z-10">
+            <span className="text-[11px] text-slate-300 font-bold bg-white/5 px-3 py-1 rounded-full border border-white/10">
+              💵 En Bolsillos: ${globalBalance.balance.toLocaleString('es-CO')}
+            </span>
+            {dineroPrestadoTotal > 0 && (
+              <span className="text-[11px] text-emerald-400 font-bold bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
+                🤝 En Préstamos: +${dineroPrestadoTotal.toLocaleString('es-CO')}
+              </span>
+            )}
+            <span className="text-[11px] text-brand-income font-bold flex items-center gap-1">
               <ArrowUpRight size={12} /> Ingresos: ${stats.totalIncome.toLocaleString('es-CO')}
             </span>
-            <span className="text-[11px] text-brand-expense font-black flex items-center gap-1">
+            <span className="text-[11px] text-brand-expense font-bold flex items-center gap-1">
               <ArrowDownRight size={12} /> Gastos: ${stats.totalExpenses.toLocaleString('es-CO')}
             </span>
           </div>
