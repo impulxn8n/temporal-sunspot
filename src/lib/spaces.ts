@@ -112,14 +112,7 @@ export const spaceIdToUnidad = (spaceId: string): Unidad => {
 
 // Asegura que cada movimiento tenga space_id derivado de su unidad si falta.
 export const migrateMovimientoSpace = (m: Movimiento): Movimiento => {
-  if (m.space_id && BOLSILLO_SPACE_IDS.includes(m.space_id)) return m;
-  // Si es un gasto y no está asignado a un bolsillo, asignarlo a Gastos Base
-  if (m.tipo_movimiento === 'Gasto' || m.tipo_movimiento === 'Inversión') {
-    return { ...m, space_id: SPACE_IDS.BOLS_GASTOS_BASE };
-  }
-  if (!m.space_id) {
-    return { ...m, space_id: unidadToSpaceId(m.unidad) };
-  }
-  return m;
+  if (m.space_id) return m;
+  return { ...m, space_id: unidadToSpaceId(m.unidad) };
 };
 

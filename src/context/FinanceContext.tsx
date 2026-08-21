@@ -155,19 +155,9 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const addMovimiento = useCallback((mov: Omit<Movimiento, 'id' | 'created_at' | 'periodo' | 'año' | 'mes' | 'space_id'> & { space_id?: string }) => {
     const date = new Date(mov.fecha);
     const id = crypto.randomUUID();
-    
-    let targetSpaceId = mov.space_id;
-    if (!targetSpaceId || !BOLSILLO_SPACE_IDS.includes(targetSpaceId)) {
-      if (mov.tipo_movimiento === 'Gasto' || mov.tipo_movimiento === 'Inversión') {
-        targetSpaceId = SPACE_IDS.BOLS_GASTOS_BASE;
-      } else {
-        targetSpaceId = unidadToSpaceId(mov.unidad);
-      }
-    }
-
     const newMov: Movimiento = {
       ...mov,
-      space_id: targetSpaceId,
+      space_id: mov.space_id ?? unidadToSpaceId(mov.unidad),
       id,
       created_at: new Date().toISOString(),
       periodo: mov.fecha.substring(0, 7),
@@ -586,13 +576,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       };
     }
     for (const m of movimientos) {
-      let spaceId = m.space_id;
-      if (!BOLSILLO_SPACE_IDS.includes(spaceId)) {
-        if (m.tipo_movimiento === 'Gasto' || m.tipo_movimiento === 'Inversión') {
-          spaceId = SPACE_IDS.BOLS_GASTOS_BASE;
-        }
-      }
-      const bucket = result[spaceId];
+      const bucket = result[m.space_id];
       if (!bucket) continue;
       if (m.estado !== 'Pagado') continue;
 
