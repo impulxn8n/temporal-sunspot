@@ -13,6 +13,7 @@ export const POSForm: React.FC = () => {
     fecha: new Date().toISOString().split('T')[0],
     unidad: 'SM DIGITALS' as Unidad,
     tipo_movimiento: 'Ingreso' as TipoMovimiento,
+    space_id: SPACE_IDS.BOLS_GASTOS_BASE as string,
     categoria: '',
     subcategoria: '',
     cliente_proveedor: '',
@@ -146,30 +147,52 @@ export const POSForm: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Unidad</label>
+              <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Tipo de Movimiento</label>
               <select
-                className="w-full bg-slate-900 border border-slate-700 rounded-xl py-3 px-4 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all appearance-none"
-                value={formData.unidad}
-                onChange={e => setFormData({ ...formData, unidad: e.target.value as Unidad })}
+                className="w-full bg-slate-900 border border-slate-700 rounded-xl py-3 px-4 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all appearance-none font-bold"
+                value={formData.tipo_movimiento}
+                onChange={e => {
+                  const val = e.target.value as TipoMovimiento;
+                  let space = formData.space_id;
+                  if (val === 'Gasto') space = SPACE_IDS.BOLS_GASTOS_BASE;
+                  if (val === 'Inversión') space = SPACE_IDS.BOLS_INVERSION;
+                  setFormData({ ...formData, tipo_movimiento: val, space_id: space });
+                }}
               >
-                <option value="SM DIGITALS">SM DIGITALS</option>
-                <option value="IMPULSY">IMPULSY</option>
-                <option value="DANS.IA">DANS.IA</option>
+                <option value="Ingreso">➕ Ingreso (Se reparte a bolsillos)</option>
+                <option value="Gasto">➖ Gasto (Se descuenta del bolsillo)</option>
+                <option value="Inversión">📈 Inversión</option>
               </select>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Tipo</label>
-              <select
-                className="w-full bg-slate-900 border border-slate-700 rounded-xl py-3 px-4 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all appearance-none"
-                value={formData.tipo_movimiento}
-                onChange={e => setFormData({ ...formData, tipo_movimiento: e.target.value as TipoMovimiento })}
-              >
-                <option value="Ingreso">Ingreso</option>
-                <option value="Gasto">Gasto</option>
-                <option value="Inversión">Inversión</option>
-              </select>
-            </div>
+            {formData.tipo_movimiento !== 'Ingreso' ? (
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-amber-400 uppercase tracking-wider">Bolsillo de donde sale el dinero *</label>
+                <select
+                  className="w-full bg-slate-900 border border-amber-500/50 rounded-xl py-3 px-4 text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50 transition-all appearance-none font-bold"
+                  value={formData.space_id}
+                  onChange={e => setFormData({ ...formData, space_id: e.target.value })}
+                >
+                  <option value={SPACE_IDS.BOLS_GASTOS_BASE}>🏠 Gastos Base (Operativo)</option>
+                  <option value={SPACE_IDS.BOLS_CAPRICHOS}>☕ Caprichos (Estilo de vida)</option>
+                  <option value={SPACE_IDS.BOLS_INVERSION}>📈 Inversión</option>
+                  <option value={SPACE_IDS.BOLS_SEGURIDAD}>🛡️ Fondo de Seguridad (Emergencia)</option>
+                </select>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Unidad de Negocio</label>
+                <select
+                  className="w-full bg-slate-900 border border-slate-700 rounded-xl py-3 px-4 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all appearance-none"
+                  value={formData.unidad}
+                  onChange={e => setFormData({ ...formData, unidad: e.target.value as Unidad })}
+                >
+                  <option value="SM DIGITALS">SM DIGITALS</option>
+                  <option value="IMPULSY">IMPULSY</option>
+                  <option value="DANS.IA">DANS.IA</option>
+                </select>
+              </div>
+            )}
           </div>
 
           <div className="space-y-2">

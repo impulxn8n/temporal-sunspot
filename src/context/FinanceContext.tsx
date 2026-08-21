@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useMemo } from 'react';
 import type { Movimiento, ClienteMRR, Proyecto, Deuda, Presupuesto, Space, SpaceView, CuentaPorCobrar } from '../types';
 import { loadData, saveData } from '../lib/storage';
-import { spaceIdToUnidad, unidadToSpaceId, SPACE_IDS, defaultSpaces, BOLSILLO_SPACE_IDS } from '../lib/spaces';
+import { spaceIdToUnidad, unidadToSpaceId, SPACE_IDS, defaultSpaces, BOLSILLO_SPACE_IDS, migrateMovimientoSpace } from '../lib/spaces';
 import { createFinanceSpreadsheet, updateSheetValues, getSpreadsheetIdByName, getSheetValues } from '../lib/googleSheets';
 import { db } from '../lib/supabaseStorage';
 
@@ -117,8 +117,8 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
           db.cuentasPorCobrar.load(),
         ]);
 
-        if (movs) setMovimientos(movs as any);
-        else setMovimientos(local.movimientos || []);
+        if (movs) setMovimientos((movs as any).map(migrateMovimientoSpace));
+        else setMovimientos((local.movimientos || []).map(migrateMovimientoSpace));
 
         if (clients) setClientesMRR(clients as any);
         else setClientesMRR(local.clientesMRR || []);
@@ -155,9 +155,19 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const addMovimiento = useCallback((mov: Omit<Movimiento, 'id' | 'created_at' | 'periodo' | 'año' | 'mes' | 'space_id'> & { space_id?: string }) => {
     const date = new Date(mov.fecha);
     const id = crypto.randomUUID();
+    
+    let targetSpaceId = mov.space_id;
+    if (!targetSpaceId || !BOLSILLO_SPACE_IDS.includes(targetSpaceId)) {
+      if (mov.tipo_movimiento === 'Gasto' || mov.tipo_movimiento === 'Inversión') {
+        targetSpaceId = SPACE_IDS.BOLS_GASTOS_BASE;
+      } else {
+        targetSpaceId = unidadToSpaceId(mov.unidad);
+      }
+    }
+
     const newMov: Movimiento = {
       ...mov,
-      space_id: mov.space_id ?? unidadToSpaceId(mov.unidad),
+      space_id: targetSpaceId,
       id,
       created_at: new Date().toISOString(),
       periodo: mov.fecha.substring(0, 7),
@@ -576,7 +586,13 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       };
     }
     for (const m of movimientos) {
-      const bucket = result[m.space_id];
+      let spaceId = m.space_id;
+      if (!BOLSILLO_SPACE_IDS.includes(spaceId)) {
+        if (m.tipo_movimiento === 'Gasto' || m.tipo_movimiento === 'Inversión') {
+          spaceId = SPACE_IDS.BOLS_GASTOS_BASE;
+        }
+      }
+      const bucket = result[spaceId];
       if (!bucket) continue;
       if (m.estado !== 'Pagado') continue;
 
