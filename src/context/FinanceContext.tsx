@@ -117,27 +117,57 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
           db.cuentasPorCobrar.load(),
         ]);
 
-        if (movs) setMovimientos((movs as any).map(migrateMovimientoSpace));
-        else setMovimientos((local.movimientos || []).map(migrateMovimientoSpace));
+        // Fusionar movimientos (Local + Supabase) para que NUNCA se borre nada
+        const localMovsMap = new Map<string, Movimiento>();
+        (local.movimientos || []).forEach(m => localMovsMap.set(m.id, migrateMovimientoSpace(m)));
+        ((movs as Movimiento[]) || []).forEach(m => localMovsMap.set(m.id, migrateMovimientoSpace(m)));
+        const finalMovs = Array.from(localMovsMap.values());
+        setMovimientos(finalMovs);
+        saveData({ movimientos: finalMovs });
+        db.movimientos.upsert(finalMovs).catch(console.error);
 
-        if (clients) setClientesMRR(clients as any);
-        else setClientesMRR(local.clientesMRR || []);
+        // Fusionar Clientes MRR
+        const localClientsMap = new Map<string, ClienteMRR>();
+        (local.clientesMRR || []).forEach((c: any) => localClientsMap.set(c.id, c));
+        ((clients as ClienteMRR[]) || []).forEach(c => localClientsMap.set(c.id, c));
+        const finalClients = Array.from(localClientsMap.values());
+        setClientesMRR(finalClients);
+        saveData({ clientesMRR: finalClients });
+        finalClients.forEach(c => db.clientesMRR.upsert(c).catch(console.error));
 
-        if (debts) setDeudas(debts as any);
-        else setDeudas(local.deudas || []);
+        // Fusionar Deudas
+        const localDebtsMap = new Map<string, Deuda>();
+        (local.deudas || []).forEach((d: any) => localDebtsMap.set(d.id, d));
+        ((debts as Deuda[]) || []).forEach(d => localDebtsMap.set(d.id, d));
+        const finalDebts = Array.from(localDebtsMap.values());
+        setDeudas(finalDebts);
+        saveData({ deudas: finalDebts });
+        finalDebts.forEach(d => db.deudas.upsert(d).catch(console.error));
 
+        // Fusionar Cuentas por Cobrar / Préstamos
         const localCuentasMap = new Map<string, CuentaPorCobrar>();
-        (local.cuentasPorCobrar || []).forEach(c => localCuentasMap.set(c.id, c));
+        (local.cuentasPorCobrar || []).forEach((c: any) => localCuentasMap.set(c.id, c));
         ((cuentas as CuentaPorCobrar[]) || []).forEach(c => localCuentasMap.set(c.id, c));
         const finalCuentas = Array.from(localCuentasMap.values());
         setCuentasPorCobrar(finalCuentas);
         saveData({ cuentasPorCobrar: finalCuentas });
+        finalCuentas.forEach(c => db.cuentasPorCobrar.upsert(c).catch(console.error));
 
-        if (projs) setProyectos(projs as any);
-        else setProyectos(local.proyectos || []);
+        // Fusionar Proyectos
+        const localProjsMap = new Map<string, Proyecto>();
+        (local.proyectos || []).forEach((p: any) => localProjsMap.set(p.id, p));
+        ((projs as Proyecto[]) || []).forEach(p => localProjsMap.set(p.id, p));
+        const finalProjs = Array.from(localProjsMap.values());
+        setProyectos(finalProjs);
+        saveData({ proyectos: finalProjs });
 
-        if (budgets) setPresupuestos(budgets as any);
-        else setPresupuestos(local.presupuestos || []);
+        // Fusionar Presupuestos
+        const localBudgetsMap = new Map<string, Presupuesto>();
+        (local.presupuestos || []).forEach((b: any) => localBudgetsMap.set(b.id, b));
+        ((budgets as Presupuesto[]) || []).forEach(b => localBudgetsMap.set(b.id, b));
+        const finalBudgets = Array.from(localBudgetsMap.values());
+        setPresupuestos(finalBudgets);
+        saveData({ presupuestos: finalBudgets });
       } catch (err) {
         console.error('[Bootstrap] Supabase failed, falling back to localStorage:', err);
         setMovimientos(local.movimientos);
@@ -165,13 +195,21 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       mes: date.getMonth() + 1,
     };
 
-    setMovimientos(prev => [...prev, newMov]);
+    setMovimientos(prev => {
+      const updated = [...prev, newMov];
+      saveData({ movimientos: updated });
+      return updated;
+    });
     db.movimientos.upsert([newMov]).catch(console.error);
     return newMov;
   }, []);
 
   const removeMovimiento = useCallback((id: string) => {
-    setMovimientos(prev => prev.filter(m => m.id !== id));
+    setMovimientos(prev => {
+      const updated = prev.filter(m => m.id !== id);
+      saveData({ movimientos: updated });
+      return updated;
+    });
     db.movimientos.deleteById(id).catch(console.error);
   }, []);
 
