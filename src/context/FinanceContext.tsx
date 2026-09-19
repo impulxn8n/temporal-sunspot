@@ -55,6 +55,7 @@ interface FinanceContextType {
   undoDebtPayment: (debtId: string, paymentAmount: number) => void;
   addCuentaPorCobrar: (cuenta: Omit<CuentaPorCobrar, 'id' | 'created_at'>) => CuentaPorCobrar;
   marcarCuentaPorCobrar: (cuentaId: string, montoCobrado: number) => void;
+  updateCuentaPorCobrar: (cuentaId: string, updates: Partial<CuentaPorCobrar>) => void;
   removeCuentaPorCobrar: (cuentaId: string) => void;
   balancesBySpace: Record<string, SpaceBalance>;
   globalBalance: SpaceBalance;
@@ -394,6 +395,15 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     });
     db.cuentasPorCobrar.upsert(newCuenta).catch(console.error);
     return newCuenta;
+  }, []);
+
+  const updateCuentaPorCobrar = useCallback((cuentaId: string, updates: Partial<CuentaPorCobrar>) => {
+    setCuentasPorCobrar(prev => {
+      const updated = prev.map(c => c.id === cuentaId ? { ...c, ...updates } : c);
+      saveData({ cuentasPorCobrar: updated });
+      return updated;
+    });
+    db.cuentasPorCobrar.update(cuentaId, updates).catch(console.error);
   }, []);
 
   const marcarCuentaPorCobrar = useCallback((cuentaId: string, montoCobrado: number) => {
@@ -846,6 +856,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     undoDebtPayment,
     addCuentaPorCobrar,
     marcarCuentaPorCobrar,
+    updateCuentaPorCobrar,
     removeCuentaPorCobrar,
     balancesBySpace,
     globalBalance,

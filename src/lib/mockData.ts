@@ -55,8 +55,8 @@ export const mockCuentasPorCobrar: CuentaPorCobrar[] = [
     monto: 591000,
     fecha_emision: '2026-08-11',
     descripcion: '[PRESTAMO] Préstamo personal',
-    estado: 'Pendiente',
-    monto_cobrado: 0,
+    estado: 'Parcial',
+    monto_cobrado: 150000,
     created_at: '2026-08-11T11:40:00Z',
   },
   {
